@@ -1,1 +1,1 @@
-this document is only for studying
+This document is only for studying philosophy.
