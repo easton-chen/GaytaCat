@@ -674,6 +674,14 @@ void MEM()
 void WB()
 {
 	//read MEM_WB
-
+  unsigned int Mem_read=MEM_WB.Mem_read;
+	REG ALU_out=MEM_WB.ALU_out;
+	int Reg_dst=MEM_WB.Reg_dst;
+	char Ctrl_WB_RegWrite=MEM_WB.Ctrl_WB_RegWrite;
+	char Ctrl_WB_MemtoReg=MEM_WB.Ctrl_WB_MemtoReg;
+	if(Ctrl_WB_RegWrite==1)
+	{
+			reg[Reg_dst]=ALU_out;
+	}
 	//write reg
 }
