@@ -189,51 +189,57 @@ void ID()
 			case 0:
 				switch(fuc7){
 					case 0x00:
-						ALUop=1;
+						ALUop=1;// R[rd] ← R[rs1] + R[rs2]
 						break;
 					case 0x01:
-						ALUop=2;
+						ALUop=2;//R[rd] ← (R[rs1] * R[rs2])[31:0]
 						break;
 					case 0x20:
-						ALUop=3;
+						ALUop=3;//R[rd] ← R[rs1] - R[rs2]
 						break;
 					default: printf("Illegal Instruction\n"); break;
 				}
 				break;
 			case 1:
-				if(fuc7 == 0x00) ALUop=4;
-				else if(fuc7==0x01) ALUop=5;//0x01
-				else printf("Illegal Instruction");
+				if(fuc7 == 0x00) ALUop=4;//R[rd] ← R[rs1] << R[rs2]
+				else if(fuc7==0x01) ALUop=5;//R[rd] ← (R[rs1] * R[rs2])[63:32]
+				else printf("Illegal Instruction\n");
 				break;
 			case 2:
-				ALUop=6;
+				if(fuc7==0x00) ALUop=6;//R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0
+				else printf("Illegal Instruction\n");
 				break;
 			case 4:
-				if(fuc7 == 0x00) ALUop=7;
-				else ALUop=8;//0x01
+				if(fuc7 == 0x00) ALUop=7;//R[rd] ← R[rs1] ^ R[rs2]
+				else if(fuc7==0x01) ALUop=8;//R[rd] ← R[rs1] / R[rs2]
+				else printf("Illegal Instruction\n");
 				break;
 			case 5:
-				if(fuc7 == 0x00) ALUop=9;
-				else ALUop=10;//0x20
+				if(fuc7 == 0x00||fuc7==0x02) ALUop=9;//R[rd] ← R[rs1] >> R[rs2]
+				else printf("Illegal Instruction\n");
 				break;
 			case 6:
-				if(fuc7 == 0x00) ALUop=11;
-				else ALUop=12;//0x01
+				if(fuc7 == 0x00) ALUop=10;//R[rd] ← R[rs1] | R[rs2]
+				else if(fuc7==0x01) ALUop=11;//R[rd] ← R[rs1] % R[rs2]
+				else printf("Illegal Instruction\n");
 				break;
 			case 7:
-				ALUop=13;
+				if(fuc7==0x00) ALUop=12;//R[rd] ← R[rs1] & R[rs2]
+				else printf("Illegal Instruction\n");
 				break;
-			default: break;
+			default: 
+				printf("Illegal Instruction\n");
+				break;
 		}
 	}
-	else if(OP==OP_I)
+	else if(OP==OP_I)//I 0x13
     {
     	Imm=getbit(inst,0,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
 
-    	EXTop=0;
+    		EXTop=0;
 		RegDst=1;
 		ALUop=0;
 		ALUSrc=1;
@@ -245,38 +251,43 @@ void ID()
 
 		switch(fuc3){
 			case 0:
-				ALUop=18;
+				ALUop=17;//R[rd] ← R[rs1] + imm
 				break;
 			case 1:
-				ALUop=19;
+				if(fuc7==0x00)
+				ALUop=18;//R[rd] ← R[rs1] << imm
+				else printf("Illegal Instruction\n");
 				break;
 			case 2:
-				ALUop=20;
+				ALUop=19;//R[rd] ← (R[rs1] < imm) ? 1 : 0
 				break;
 			case 4:
-				ALUop=21;
+				ALUop=20;//R[rd] ← R[rs1] ^ imm
 				break;
 			case 5:
-				if(fuc7 == 0x00) ALUop=22;
-				else ALUop=23;//0x20
+				if(fuc7 == 0x00||fuc7==0x20) ALUop=21;//R[rd] ← R[rs1] >> imm
+				else printf("Illegal Instruction\n");
 				break;
 			case 6:
-				ALUop=24;
+				
+				ALUop=22;//R[rd] ← R[rs1] | imm
 				break;
-			case 7:
-				ALUop=25;
+			case 7:		
+				ALUop=23;//R[rd] ← R[rs1] & imm
 				break;
-			default: break;
+			default:
+				printf("Illegal Instruction\n"); 
+				break;
 		}
     }
-    else if(OP==OP_SW)
+    else if(OP==OP_SW)//S 0x23 
     {
         Imm=getbit(inst,0,6)<<5 + getbit(inst,20,24);
         rt=getbit(inst,7,11);
         rs=getbit(inst,12,16);
         fuc3=getbit(inst,17,19);
 
-    	EXTop=1;
+    		EXTop=1;
 		RegDst=0;
 		ALUop=0;
 		ALUSrc=1;
@@ -288,27 +299,29 @@ void ID()
 
 		switch(fuc3){
 			case 0:
-				ALUop=29;
+				ALUop=30;//Mem(R[rs1] + offset) ← R[rs2][7:0]
 				break;
 			case 1:
-				ALUop=30;
+				ALUop=31;//Mem(R[rs1] + offset) ← R[rs2][15:0]
 				break;
 			case 2:
-				ALUop=31;
+				ALUop=32;//Mem(R[rs1] + offset) ← R[rs2][31:0]
 				break;
 			case 3:
-				ALUop=32;
+				ALUop=33;//Mem(R[rs1] + offset) ← R[rs2][63:0]
 				break;
+			default: printf("Illegal Instruction\n"); break;
 		}
     }
-    else if(OP==OP_LW)
+    else if(OP==OP_LW)//I 0x03  The LW instruction loads a 32-bit value from memory and sign-extends this to 64 bits before storing
+it in register rd for RV64I.
     {
         Imm=getbit(inst,0,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
 
-    	EXTop=1;
+    	EXTop=1;//sign-extend
 		RegDst=1;
 		ALUop=0;
 		ALUSrc=1;
@@ -320,16 +333,16 @@ void ID()
 
 		switch(fuc3){
 			case 0:
-				ALUop=14;
+				ALUop=13;
 				break;
 			case 1:
-				ALUop=15;
+				ALUop=14;
 				break;
 			case 2:
-				ALUop=16;
+				ALUop=15;
 				break;
 			case 3:
-				ALUop=17;
+				ALUop=16;
 				break;
 			default: break;
 		}
