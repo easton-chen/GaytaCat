@@ -588,44 +588,124 @@ void EX()
 	REG ALUout;
 	switch(ALUOp){
 		case 1:
+			ALUout=Rs+Rt;
+			break;
 		case 2:
+			ALUout=(Rs*Rt)&(1<<32-1);
+			break;
 		case 3:
+			ALUout=Rs-Rt;
+			break;
 		case 4:
+			ALUout=Rs<<Rt;
+			break;
 		case 5:
+			ALUout=(Rs*Rt)&((1<<32-1)<<32);
+			break;
 		case 6:
+			if(Rs<Rt) ALUout=1;
+			else ALUout=0;
+			break;
 		case 7:
+			ALUout=Rs^Rt;
+			break;
 		case 8:
+			ALUout=Rs/Rt;
+			break;
 		case 9:
+			ALUout=Rs>>Rt;
+			break;
 		case 10:
+			ALUout=Rs|Rt;
+			break;
 		case 11:
+			ALUout=Rs%Rt;
+			break;
 		case 12:
+			ALUout=Rs&Rt;
+			break;
 		case 13:
+			ALUout=Rs+Imm;
+			break;
 		case 14:
+			ALUout=Rs+Imm;
+			break;
 		case 15:
+			ALUout=Rs+Imm;
+			break;
 		case 16:
+			ALUout=Rs+Imm;
+			break;
 		case 17:
+			ALUout=Rs+Imm;
+			break;
 		case 18:
+			ALUout=Rs<<Imm;
+			break;
 		case 19:
+			if(Rs<Imm)ALUout=1;
+			else ALUout=0;
+			break;
 		case 20:
+			ALUout=Rs^Imm;
+			break;
 		case 21:
+			ALUout=Rs>>Imm;
+			break;
 		case 22:
+			ALUout=Rs|Imm;
+			break;
 		case 23:
+			ALUout=Rs&Imm;
+			break;
 		case 24:
+			ALUout=ext_signed(Rs&(1<<32-1)+Imm, 1);
+			break;
 		case 25:
+			ALUout=temp_PC+4;
+			PC=Rs+(Imm<<1);
+			break;
 		case 26:
+			printf("System call\n");
+			break;
 		case 27:
+			ALUout=Rs+Imm;
+			break;
 		case 28:
+			ALUout=Rs+Imm;
+			break;
 		case 29:
+			ALUout=Rs+Imm;
+			break;
 		case 30:
+			ALUout=Rs+Imm;
+			break;
 		case 31:
+			if(Rs==Rt) PC=PC+Imm;
+			break;
 		case 32:
+			if(Rs!=Rt) PC=PC+Imm;
+			break;
 		case 33:
+			if(Rs<Rt) PC=PC+Imm;
+			break;
 		case 34:
+			if(Rs>=Rt) PC=PC+Imm;
+			break;
 		case 35:
+			ALUout=PC+Imm;
+			break;
 		case 36:
+			ALUout=Imm;
+			break;
 		case 37:
+			ALUout=PC+4;
+			PC=PC+Imm;
+			break;
 		
-		default:;
+		default:
+			printf("Error: Not found in current ISA.\n");
+			break;
 	}
 
 	//choose reg dst address
@@ -638,8 +718,6 @@ void EX()
 	{
 		Reg_Dst=rt;
 	}
-
-
 
 	//write EX_MEM_old
 	EX_MEM_old.PC=temp_PC;
