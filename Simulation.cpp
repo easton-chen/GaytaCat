@@ -566,8 +566,8 @@ void EX()
 	unsigned int rt=ID_EX.Rt;
 	unsigned int Imm=ID_EX.Imm;
 
-	REG Rs=ID_EX.Rs;
-	REG Rt=ID_EX.Rt;
+	REG Rs=ID_EX.Reg_Rs;
+	REG Rt=ID_EX.Reg_Rt;
 
 	char ALUSrc=ID_EX.Ctrl_EX_ALUSrc;
 	char ALUop=ID_EX.Ctrl_EX_ALUOp;
@@ -586,7 +586,7 @@ void EX()
 	//alu calculate
 	int Zero;
 	REG ALUout;
-	switch(ALUOp){
+	switch(ALUop){
 		case 1:
 			ALUout=Rs+Rt;
 			break;
@@ -735,8 +735,6 @@ void EX()
 }
 
 //访问存储器
-void MEM()
-{
 	void MEM()
 {
 	//read EX_MEM
@@ -782,7 +780,6 @@ void MEM()
 	MEM_WB_old.RegDst=EX_MEM.RegDst;
 	MEM_WB_old.Ctrl_WB_MemtoReg=EX_MEM.Ctrl_WB_MemtoReg;
 	MEM_WB_old.Ctrl_WB_RegWrite=EX_MEM.Ctrl_WB_RegWrite;
-}
 }
 
 
