@@ -49,7 +49,7 @@ unsigned char memory[MAX]={0};
 //寄存器堆
 REG reg[32]={0};
 //PC
-int PC=0;
+long long PC=0;
 
 
 //各个指令解析段

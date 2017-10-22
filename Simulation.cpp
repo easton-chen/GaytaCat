@@ -137,8 +137,8 @@ void IF()
 	//write IF_ID_old
 	//IF_ID_old.inst=memory[PC];
 	memcpy(&IF_ID_old.inst,memory+PC,4);
-	PC=PC+4;
 	IF_ID_old.PC=PC;
+	PC=PC+4;
 }
 
 //译码
@@ -238,8 +238,8 @@ void ID()
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
- 	fuc7=getbit(inst,0,6);
-    		EXTop=0;
+ 		fuc7=getbit(inst,0,6);
+    	EXTop=0;
 		RegDst=1;
 		ALUop=0;
 		ALUSrc=1;
@@ -491,6 +491,10 @@ it in register rd for RV64I.
 	//write ID_EX_old
 	ID_EX_old.Rd=rd;
 	ID_EX_old.Rt=rt;
+	ID_EX_old.Reg_Rs=reg[rs];
+	ID_EX_old.Reg_Rt=reg[rt];
+
+	ID_EX_old.PC=IF_ID.PC;
 	ID_EX_old.Imm=ext_signed(EXTsrc,EXTop);
 	//...
 
@@ -510,10 +514,20 @@ it in register rd for RV64I.
 //执行
 void EX()
 {
+	unsigned int rd=ID_EX.Rd;
+	unsigned int rt=ID_EX.Rt;
+	unsigned int Imm=ID_EX.Imm;
+
+	REG Rs=ID_EX.Rs;
+	REG Rt=ID_EX.Rt;
+
+	char ALUSrc=ID_EX.Ctrl_EX_ALUSrc;
+	char ALUop=ID_EX.Ctrl_EX_ALUOp;
+	char RegDst=ID_EX.Ctrl_EX_RegDst;
+
 	//read ID_EX
 	int temp_PC=ID_EX.PC;
-	char RegDst=ID_EX.Ctrl_EX_RegDst;
-	char ALUOp=ID_EX.Ctrl_EX_ALUOp;
+
 
 	//Branch PC calulate
 	//...
@@ -532,19 +546,28 @@ void EX()
 	int Reg_Dst;
 	if(RegDst)
 	{
-
+		Reg_Dst=rd;
 	}
 	else
 	{
-
+		Reg_Dst=rt;
 	}
 
 
 
 	//write EX_MEM_old
-	EX_MEM_old.ALU_out=ALUout;
 	EX_MEM_old.PC=temp_PC;
-    //.....
+	EX_MEM_old.Reg_dst=Reg_Dst;
+	EX_MEM_old.ALU_out=ALUout;
+	EX_MEM_old.Reg_Rt=Rt;
+
+	EX_MEM_old.Ctrl_EX_ALUOp=ALUop;
+	EX_MEM_old.Ctrl_M_Branch=ID_EX.Ctrl_M_Branch;
+	EX_MEM_old.Ctrl_M_MemWrite=ID_EX.Ctrl_M_MemWrite;
+	EX_MEM_old.Ctrl_M_MemRead=ID_EX.Ctrl_M_MemRead;
+
+	EX_MEM_old.Ctrl_WB_RegWrite=ID_EX.Ctrl_WB_RegWrite;
+	EX_MEM_old.Ctrl_WB_MemtoReg=ID_EX.Ctrl_WB_MemtoReg;
 }
 
 //访问存储器
