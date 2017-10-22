@@ -289,7 +289,7 @@ void ID()
     }
     else if(OP==OP_SW)//S 0x23 
     {
-    	Imm=getbit(inst,0,6)<<5 + getbit(inst,20,24);
+    	Imm=(getbit(inst,0,6)<<5) + getbit(inst,20,24);
       	rt=getbit(inst,7,11);
       	rs=getbit(inst,12,16);
       	fuc3=getbit(inst,17,19);
@@ -355,7 +355,7 @@ void ID()
     }
     else if(OP==OP_BEQ)//SB  0x63
     {
-   		Imm=getbit(inst,0,0)<<12 + getbit(inst,24,24)<<11 + getbit(inst,1,6)<<5 + getbit(inst,20,23)<<1;
+   		Imm=(getbit(inst,0,0)<<12) + (getbit(inst,24,24)<<11) + (getbit(inst,1,6)<<5) + (getbit(inst,20,23)<<1);
     	rt=getbit(inst,7,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
@@ -389,7 +389,7 @@ void ID()
     }
     else if(OP==OP_JAL)//UJ 0x6f R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}
     {
-    	Imm=getbit(inst,0,0)<<20 + getbit(inst,12,19)<<12 + getbit(inst,11,11)<<11 + getbit(inst,1,10)<<1;
+    	Imm=(getbit(inst,0,0)<<20) + (getbit(inst,12,19)<<12) + (getbit(inst,11,11)<<11) + (getbit(inst,1,10)<<1);
     	rd=getbit(inst,20,24);
     	EXTop=1;
 		RegDst=1;
@@ -591,7 +591,7 @@ void EX()
 			ALUout=Rs+Rt;
 			break;
 		case 2:
-			ALUout=(Rs*Rt)&(1<<32-1);
+			ALUout=(Rs*Rt)&((1<<32)-1);
 			break;
 		case 3:
 			ALUout=Rs-Rt;
@@ -600,7 +600,7 @@ void EX()
 			ALUout=Rs<<Rt;
 			break;
 		case 5:
-			ALUout=(Rs*Rt)&((1<<32-1)<<32);
+			ALUout=((Rs*Rt)>>32)&((1<<32)-1);
 			break;
 		case 6:
 			if(Rs<Rt) ALUout=1;
@@ -659,7 +659,7 @@ void EX()
 			ALUout=Rs&Imm;
 			break;
 		case 24:
-			ALUout=ext_signed(Rs&(1<<32-1)+Imm, 1);
+			ALUout=ext_signed((Rs&((1<<32)-1))+Imm,1);
 			break;
 		case 25:
 			ALUout=temp_PC+4;
