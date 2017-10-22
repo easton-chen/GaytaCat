@@ -1,1 +1,1 @@
-this document only for studying
+this document is only for studying
