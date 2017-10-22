@@ -617,23 +617,42 @@ void MEM()
 	char Branch=EX_MEM.Ctrl_M_Branch;
 	char MemWrite=EX_MEM.Ctrl_M_MemWrite;
 	char MemRead=EX_MEM.Ctrl_M_MemRead;
-	if(Branch==1 || MemWrite==0 || MemRead==0)	//which means this instruction don't have to visit memory
-		return ;
+	char ALUop=EX_MEM.Ctrl_EX_ALUop;
+	unsigned long long addr=EX_MEM.ALU_out;
+	long long reg_rt=EX_MEM.Reg_Rt
+	long long val;
 	//complete Branch instruction PC change (no idea what he is talking about)
 
 	//read / write memory
-	unsigned long long addr=EX_MEM.ALU_out;
-	long long val;
+	//read memory
 	if(MemRead == 1)
 	{
-		memcpy(&val,&memory[addr],)
+		switch(ALUop)
+		{
+			case 13:memcpy(&val,&memory[addr],1);ext_signed(val,1);break;
+			case 14:memcpy(&val,&memory[addr],2);ext_signed(val,1);break;
+			case 15:memcpy(&val,&memory[addr],4);break;
+			case 16:memcpy(&val,&memory[addr],8);break;
+		}
+		
 	}
 	else if (MemWrite == 1)
 	{
+		switch(ALUop)
+		{
+			case 27:val=getbit64(reg_rt,56,63);memcpy(&memory[addr],&val,1);break;
+			case 28:val=getbit64(reg_rt,48,63);memcpy(&memory[addr],&val,2);break;
+			case 29:val=getbit64(reg_rt,32,63);memcpy(&memory[addr],&val,4);break;
+			case 30:val=getbit64(reg_rt,0,63);memcpy(&memory[addr],&val,8);break;		
+		}
 
 	}
 	//write MEM_WB_old
-	MEM_WB_old.PC=EX_MEM.PC;
+	if(MemRead == 0) 
+		MEM_WB_old.ALUout=EX_MEM.ALUout;
+	else 
+		MEM_WB_old.ALUout=val;
+	MEM_WB_old.MemRead=EX_MEM.Ctrl_M_MemRead;
 	MEM_WB_old.RegDst=EX_MEM.RegDst;
 	MEM_WB_old.Ctrl_WB_MemtoReg=EX_MEM.Ctrl_WB_MemtoReg;
 	MEM_WB_old.Ctrl_WB_RegWrite=EX_MEM.Ctrl_WB_RegWrite;
