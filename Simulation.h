@@ -49,7 +49,7 @@ unsigned char memory[MAX]={0};
 //寄存器堆
 REG reg[32]={0};
 //PC
-int PC=0;
+long long PC=0;
 
 
 //各个指令解析段
@@ -106,7 +106,7 @@ unsigned int getbit(unsigned int inst,int s,int e)
 	unsigned int mask=0; 
 	for(int i=31-e;i<=31-s;++i)
 		mask |= (1<<i);
-	return (inst & mask)<<s;
+	return (inst & mask)>>(31-e);
 }
 
 /*
