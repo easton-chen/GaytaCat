@@ -123,21 +123,31 @@ unsigned int getbit(unsigned inst,int s,int e)
 }
 */
 
-long long ext_signed(unsigned int src,int bit)
+long long ext_signed(unsigned int src,int bit,int length)
 {
         if(bit==0)
         return (long long)src;
         else
         {
-                int sign=(src&(1<<31))>>31;
+                int sign=(src&(1<<(length-1)))>>(length-1);
                 //printf("sign:%d\n",sign);
                 long long tmp=0;
-                for(int i=0;i<32;++i)
+                for(int i=0;i<64-length;++i)
                  tmp=tmp|(sign<<i);
                 //printf("tmp:%llx\n",tmp);
-                tmp=tmp<<32;
+                tmp=tmp<<length;
                 //printf("tmp:%llx\n",tmp);
                 return tmp+(long long)src;
         }
 }
 
+void print_REG()
+{
+	printf("The register files are as follows:\n");
+	printf("------------------------------------\n");
+	for(int i = 0; i < 32; i++)
+	{
+		printf("REG[%d] = %llx\n", i, reg[i]);
+	}
+	printf("------------------------------------\n");
+}
