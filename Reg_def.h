@@ -8,7 +8,7 @@ struct IFID{
 
 struct IDEX{
 	int Rd,Rt;
-	int PC;
+	long long PC;
 	int Imm;
 	REG Reg_Rs,Reg_Rt;
 
@@ -26,12 +26,14 @@ struct IDEX{
 }ID_EX,ID_EX_old;
 
 struct EXMEM{
-	int PC;
+	long long PC;
 	int Reg_dst;
 	REG ALU_out;
 	int Zero;
 	REG Reg_Rt;
 
+	char Ctrl_EX_ALUOp;
+	
 	char Ctrl_M_Branch;
 	char Ctrl_M_MemWrite;
 	char Ctrl_M_MemRead;
