@@ -96,7 +96,7 @@ void WB();
 
 
 //符号扩展
-int ext_signed(unsigned int src,int bit);
+long long ext_signed(unsigned int src,int bit);
 
 //获取指定位
 //unsigned int getbit(int s,int e);
@@ -117,8 +117,21 @@ unsigned int getbit(unsigned inst,int s,int e)
 }
 */
 
-int ext_signed(unsigned int src,int bit)
+long long ext_signed(unsigned int src,int bit)
 {
-    return 0;
+        if(bit==0)
+        return (long long)src;
+        else
+        {
+                int sign=(src&(1<<31))>>31;
+                //printf("sign:%d\n",sign);
+                long long tmp=0;
+                for(int i=0;i<32;++i)
+                 tmp=tmp|(sign<<i);
+                //printf("tmp:%llx\n",tmp);
+                tmp=tmp<<32;
+                //printf("tmp:%llx\n",tmp);
+                return tmp+(long long)src;
+        }
 }
 
