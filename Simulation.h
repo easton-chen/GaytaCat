@@ -108,7 +108,13 @@ unsigned int getbit(unsigned int inst,int s,int e)
 		mask |= (1<<i);
 	return (inst & mask)>>(31-e);
 }
-
+unsigned long long getbit64(unsigned long long inst,int s,int e)
+{
+	unsigned long long mask=0; 
+	for(int i=63-e;i<=63-s;++i)
+		mask |= (1<<i);
+	return (inst & mask)>>(63-e);
+}
 /*
 unsigned int getbit(unsigned inst,int s,int e)
 {

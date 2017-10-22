@@ -239,13 +239,13 @@ void ID()
 		}
 	}
 	else if(OP==OP_I)//I 0x13
-  {
-  	Imm=getbit(inst,0,11);
-    rs=getbit(inst,12,16);
-    fuc3=getbit(inst,17,19);
-    rd=getbit(inst,20,24);
+	{
+  		Imm=getbit(inst,0,11);
+    	rs=getbit(inst,12,16);
+    	fuc3=getbit(inst,17,19);
+    	rd=getbit(inst,20,24);
  		fuc7=getbit(inst,0,6);
-    EXTop=0;
+    	EXTop=0;
 		RegDst=1;
 		ALUop=0;
 		ALUSrc=1;
@@ -289,137 +289,137 @@ void ID()
     }
     else if(OP==OP_SW)//S 0x23 
     {
-    	Imm=getbit(inst,0,6)<<5 + getbit(inst,20,24);
-      rt=getbit(inst,7,11);
-      rs=getbit(inst,12,16);
-      fuc3=getbit(inst,17,19);
+    	Imm=(getbit(inst,0,6)<<5) + getbit(inst,20,24);
+      	rt=getbit(inst,7,11);
+      	rs=getbit(inst,12,16);
+      	fuc3=getbit(inst,17,19);
   		EXTop=1;
-			RegDst=0;
-			ALUop=0;
-			ALUSrc=1;
-			Branch=0;
-			MemRead=0;
-			MemWrite=1;
-			RegWrite=0;
-			MemtoReg=0;
+		RegDst=0;
+		ALUop=0;
+		ALUSrc=1;
+		Branch=0;
+		MemRead=0;
+		MemWrite=1;
+		RegWrite=0;
+		MemtoReg=0;
 
-			switch(fuc3)
-			{
-				case 0:	
-					ALUop=27;//Mem(R[rs1] + offset) ← R[rs2][7:0]
-					break;
-				case 1:
-					ALUop=28;//Mem(R[rs1] + offset) ← R[rs2][15:0]
-					break;
-				case 2:
-					ALUop=29;//Mem(R[rs1] + offset) ← R[rs2][31:0]
-					break;
-				case 3:
-					ALUop=30;//Mem(R[rs1] + offset) ← R[rs2][63:0]
-					break;
-				default: printf("Illegal Instruction\n"); break;
-			}
+		switch(fuc3)
+		{
+			case 0:	
+				ALUop=27;//Mem(R[rs1] + offset) ← R[rs2][7:0]
+				break;
+			case 1:
+				ALUop=28;//Mem(R[rs1] + offset) ← R[rs2][15:0]
+				break;
+			case 2:
+				ALUop=29;//Mem(R[rs1] + offset) ← R[rs2][31:0]
+				break;
+			case 3:
+				ALUop=30;//Mem(R[rs1] + offset) ← R[rs2][63:0]
+				break;
+			default: printf("Illegal Instruction\n"); break;
+		}
     }
     else if(OP==OP_LW)//I 0x03  The LW instruction loads a 32-bit value from memory and sign-extends this to 64 bits before storing it in register rd for RV64I.
     {
-      Imm=getbit(inst,0,11);
+    	Imm=getbit(inst,0,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
 	   	EXTop=1;//sign-extend
-			RegDst=1;
-			ALUop=0;
-			ALUSrc=1;
-			Branch=0;
-			MemRead=1;
-			MemWrite=0;
-			RegWrite=1;
-			MemtoReg=1;
+		RegDst=1;
+		ALUop=0;
+		ALUSrc=1;
+		Branch=0;
+		MemRead=1;
+		MemWrite=0;
+		RegWrite=1;
+		MemtoReg=1;
 
-			switch(fuc3)
-			{
-				case 0:
-					ALUop=13;//R[rd] ← SignExt(Mem(R[rs1] + offset, byte))
-					break;
-				case 1:
-					ALUop=14;//R[rd] ← SignExt(Mem(R[rs1] + offset, half))
-					break;
-				case 2:
-					ALUop=15;//R[rd] ← Mem(R[rs1] + offset, word)
-					break;
-				case 3:
-					ALUop=16;//R[rd] ← Mem(R[rs1] + offset, doubleword)
-					break;
-				default: printf("Illegal Instruction\n");break;
-			}
+		switch(fuc3)
+		{
+			case 0:
+				ALUop=13;//R[rd] ← SignExt(Mem(R[rs1] + offset, byte))
+				break;
+			case 1:
+				ALUop=14;//R[rd] ← SignExt(Mem(R[rs1] + offset, half))
+				break;
+			case 2:
+				ALUop=15;//R[rd] ← Mem(R[rs1] + offset, word)
+				break;
+			case 3:
+				ALUop=16;//R[rd] ← Mem(R[rs1] + offset, doubleword)
+				break;
+			default: printf("Illegal Instruction\n");break;
+		}
     }
     else if(OP==OP_BEQ)//SB  0x63
     {
-   		Imm=getbit(inst,0,0)<<12 + getbit(inst,24,24)<<11 + getbit(inst,1,6)<<5 + getbit(inst,20,23)<<1;
-      rt=getbit(inst,7,11);
-      rs=getbit(inst,12,16);
-      fuc3=getbit(inst,17,19);
+   		Imm=(getbit(inst,0,0)<<12) + (getbit(inst,24,24)<<11) + (getbit(inst,1,6)<<5) + (getbit(inst,20,23)<<1);
+    	rt=getbit(inst,7,11);
+    	rs=getbit(inst,12,16);
+    	fuc3=getbit(inst,17,19);
 
-      EXTop=0;
-			RegDst=0;
-			ALUop=0;
-			ALUSrc=0;
-			Branch=1;
-			MemRead=0;
-			MemWrite=0;
-			RegWrite=0;
-			MemtoReg=0;
+    	EXTop=0;
+		RegDst=0;
+		ALUop=0;
+		ALUSrc=0;
+		Branch=1;
+		MemRead=0;
+		MemWrite=0;
+		RegWrite=0;
+		MemtoReg=0;
 
-			switch(fuc3)
-			{
-				case 0:
-					ALUop=31;//if(R[rs1] == R[rs2]) PC ← PC + {offset, 1b'0}
-					break;
-				case 1:
-					ALUop=32;//if(R[rs1] != R[rs2]) PC ← PC + {offset, 1b'0}
-					break;
-				case 4:
-					ALUop=33;//if(R[rs1] < R[rs2]) PC ← PC + {offset, 1b'0}
-					break;
-				case 5:
-					ALUop=34;//if(R[rs1] >= R[rs2]) PC ← PC + {offset, 1b'0}
-					break;
-				default: printf("Illegal Instruction\n");break;
-			}
+		switch(fuc3)
+		{
+			case 0:
+				ALUop=31;//if(R[rs1] == R[rs2]) PC ← PC + {offset, 1b'0}
+				break;
+			case 1:
+				ALUop=32;//if(R[rs1] != R[rs2]) PC ← PC + {offset, 1b'0}
+				break;
+			case 4:
+				ALUop=33;//if(R[rs1] < R[rs2]) PC ← PC + {offset, 1b'0}
+				break;
+			case 5:
+				ALUop=34;//if(R[rs1] >= R[rs2]) PC ← PC + {offset, 1b'0}
+				break;
+			default: printf("Illegal Instruction\n");break;
+		}
     }
     else if(OP==OP_JAL)//UJ 0x6f R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}
     {
-    	Imm=getbit(inst,0,0)<<20 + getbit(inst,12,19)<<12 + getbit(inst,11,11)<<11 + getbit(inst,1,10)<<1;
+    	Imm=(getbit(inst,0,0)<<20) + (getbit(inst,12,19)<<12) + (getbit(inst,11,11)<<11) + (getbit(inst,1,10)<<1);
     	rd=getbit(inst,20,24);
-      EXTop=1;
+    	EXTop=1;
+		RegDst=1;
+		ALUop=37;
+		ALUSrc=1;
+		Branch=1;
+		MemRead=0;
+		MemWrite=0;
+		RegWrite=1;
+		MemtoReg=0;
+    }
+    else if(OP==OP_IW)//I 0x1B R[rd] ← SignExt(R[rs1](31:0) + imm)
+    {
+		Imm=getbit(inst,0,11);
+    	rs=getbit(inst,12,16);
+    	fuc3=getbit(inst,17,19);
+    	rd=getbit(inst,20,24);
+		if(fuc3==0x00)
+    	{
+			EXTop=1;
 			RegDst=1;
-			ALUop=37;
+			ALUop=24;
 			ALUSrc=1;
-			Branch=1;
+			Branch=0;
 			MemRead=0;
 			MemWrite=0;
 			RegWrite=1;
 			MemtoReg=0;
-    }
-    else if(OP==OP_IW)//I 0x1B R[rd] ← SignExt(R[rs1](31:0) + imm)
-    {
-			Imm=getbit(inst,0,11);
-    	rs=getbit(inst,12,16);
-    	fuc3=getbit(inst,17,19);
-    	rd=getbit(inst,20,24);
-			if(fuc3==0x00)
-    	{
-				EXTop=1;
-				RegDst=1;
-				ALUop=24;
-				ALUSrc=1;
-				Branch=0;
-				MemRead=0;
-				MemWrite=0;
-				RegWrite=1;
-				MemtoReg=0;
    	 	}
-			else printf("Illegal Instruction\n");	
+		else printf("Illegal Instruction\n");	
     }
     else if(OP==OP_JALR)//I 0x67 R[rd] ← PC + 4  PC ← R[rs1] + {imm, 1b'0}
     {
@@ -427,19 +427,19 @@ void ID()
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
-			if(fuc3==0x00)
+		if(fuc3==0x00)
     	{
-				EXTop=1;
-				RegDst=1;
-				ALUop=25;
-				ALUSrc=1;
-				Branch=1;
-				MemRead=0;
-				MemWrite=0;
-				RegWrite=1;
-				MemtoReg=0;
-			}
-			else printf("Illegal Instruction\n");
+			EXTop=1;
+			RegDst=1;
+			ALUop=25;
+			ALUSrc=1;
+			Branch=1;
+			MemRead=0;
+			MemWrite=0;
+			RegWrite=1;
+			MemtoReg=0;
+		}
+		else printf("Illegal Instruction\n");
     }
     else if(OP==OP_SCALL)//I 0x73 (Transfers control to operating system)
     {
@@ -447,19 +447,19 @@ void ID()
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	rd=getbit(inst,20,24);
-			fuc7=getbit(inst,0,6);
-			if(fuc3==0x0&&fuc7==0x0)
-			{
+		fuc7=getbit(inst,0,6);
+		if(fuc3==0x0&&fuc7==0x0)
+		{
     		EXTop=0;
-				RegDst=0;
-				ALUop=26;
-				ALUSrc=0;
-				Branch=0;
-				MemRead=0;
-				MemWrite=0;
-				RegWrite=0;
-				MemtoReg=0;
-			}
+			RegDst=0;
+			ALUop=26;
+			ALUSrc=0;
+			Branch=0;
+			MemRead=0;
+			MemWrite=0;
+			RegWrite=0;
+			MemtoReg=0;
+		}
 		else printf("Illegal Instruction\n");
     }
     else if(OP==OP_AUIPC)
@@ -467,30 +467,29 @@ void ID()
     	Imm=getbit(inst,0,19)<<12;
     	rd=getbit(inst,20,24);
     	EXTop=1;
-			RegDst=1;
-			ALUop=35;
-			ALUSrc=1;
-			Branch=0;
-			MemRead=0;
-			MemWrite=0;
-			RegWrite=1;
-			MemtoReg=0;
+		RegDst=1;
+		ALUop=35;
+		ALUSrc=1;
+		Branch=0;
+		MemRead=0;
+		MemWrite=0;
+		RegWrite=1;
+		MemtoReg=0;
     }
     else if(OP==OP_LUI)
     {
     	Imm=getbit(inst,0,19)<<12;
     	rd=getbit(inst,20,24);
     	EXTop=1;
-			RegDst=1;
-			ALUop=36;
-			ALUSrc=1;
-			Branch=0;
-			MemRead=0;
-			MemWrite=0;
-			RegWrite=1;
-			MemtoReg=0;
+		RegDst=1;
+		ALUop=36;
+		ALUSrc=1;
+		Branch=0;
+		MemRead=0;
+		MemWrite=0;
+		RegWrite=1;
+		MemtoReg=0;
     }
-    else{}
 
 	//write ID_EX_old
 	ID_EX_old.Rd=rd;
@@ -589,44 +588,124 @@ void EX()
 	REG ALUout;
 	switch(ALUOp){
 		case 1:
+			ALUout=Rs+Rt;
+			break;
 		case 2:
+			ALUout=(Rs*Rt)&((1<<32)-1);
+			break;
 		case 3:
+			ALUout=Rs-Rt;
+			break;
 		case 4:
+			ALUout=Rs<<Rt;
+			break;
 		case 5:
+			ALUout=((Rs*Rt)>>32)&((1<<32)-1);
+			break;
 		case 6:
+			if(Rs<Rt) ALUout=1;
+			else ALUout=0;
+			break;
 		case 7:
+			ALUout=Rs^Rt;
+			break;
 		case 8:
+			ALUout=Rs/Rt;
+			break;
 		case 9:
+			ALUout=Rs>>Rt;
+			break;
 		case 10:
+			ALUout=Rs|Rt;
+			break;
 		case 11:
+			ALUout=Rs%Rt;
+			break;
 		case 12:
+			ALUout=Rs&Rt;
+			break;
 		case 13:
+			ALUout=Rs+Imm;
+			break;
 		case 14:
+			ALUout=Rs+Imm;
+			break;
 		case 15:
+			ALUout=Rs+Imm;
+			break;
 		case 16:
+			ALUout=Rs+Imm;
+			break;
 		case 17:
+			ALUout=Rs+Imm;
+			break;
 		case 18:
+			ALUout=Rs<<Imm;
+			break;
 		case 19:
+			if(Rs<Imm)ALUout=1;
+			else ALUout=0;
+			break;
 		case 20:
+			ALUout=Rs^Imm;
+			break;
 		case 21:
+			ALUout=Rs>>Imm;
+			break;
 		case 22:
+			ALUout=Rs|Imm;
+			break;
 		case 23:
+			ALUout=Rs&Imm;
+			break;
 		case 24:
+			ALUout=ext_signed((Rs&((1<<32)-1))+Imm,1);
+			break;
 		case 25:
+			ALUout=temp_PC+4;
+			PC=Rs+(Imm<<1);
+			break;
 		case 26:
+			printf("System call\n");
+			break;
 		case 27:
+			ALUout=Rs+Imm;
+			break;
 		case 28:
+			ALUout=Rs+Imm;
+			break;
 		case 29:
+			ALUout=Rs+Imm;
+			break;
 		case 30:
+			ALUout=Rs+Imm;
+			break;
 		case 31:
+			if(Rs==Rt) PC=PC+Imm;
+			break;
 		case 32:
+			if(Rs!=Rt) PC=PC+Imm;
+			break;
 		case 33:
+			if(Rs<Rt) PC=PC+Imm;
+			break;
 		case 34:
+			if(Rs>=Rt) PC=PC+Imm;
+			break;
 		case 35:
+			ALUout=PC+Imm;
+			break;
 		case 36:
+			ALUout=Imm;
+			break;
 		case 37:
+			ALUout=PC+4;
+			PC=PC+Imm;
+			break;
 		
-		default:;
+		default:
+			printf("Error: Not found in current ISA.\n");
+			break;
 	}
 
 	//choose reg dst address
@@ -639,8 +718,6 @@ void EX()
 	{
 		Reg_Dst=rt;
 	}
-
-
 
 	//write EX_MEM_old
 	EX_MEM_old.PC=temp_PC;
@@ -660,13 +737,52 @@ void EX()
 //访问存储器
 void MEM()
 {
+	void MEM()
+{
 	//read EX_MEM
-
-	//complete Branch instruction PC change
+	char Branch=EX_MEM.Ctrl_M_Branch;
+	char MemWrite=EX_MEM.Ctrl_M_MemWrite;
+	char MemRead=EX_MEM.Ctrl_M_MemRead;
+	char ALUop=EX_MEM.Ctrl_EX_ALUop;
+	unsigned long long addr=EX_MEM.ALU_out;
+	long long reg_rt=EX_MEM.Reg_Rt
+	long long val;
+	//complete Branch instruction PC change (no idea what he is talking about)
 
 	//read / write memory
+	//read memory
+	if(MemRead == 1)
+	{
+		switch(ALUop)
+		{
+			case 13:memcpy(&val,&memory[addr],1);ext_signed(val,1);break;
+			case 14:memcpy(&val,&memory[addr],2);ext_signed(val,1);break;
+			case 15:memcpy(&val,&memory[addr],4);break;
+			case 16:memcpy(&val,&memory[addr],8);break;
+		}
+		
+	}
+	else if (MemWrite == 1)
+	{
+		switch(ALUop)
+		{
+			case 27:val=getbit64(reg_rt,56,63);memcpy(&memory[addr],&val,1);break;
+			case 28:val=getbit64(reg_rt,48,63);memcpy(&memory[addr],&val,2);break;
+			case 29:val=getbit64(reg_rt,32,63);memcpy(&memory[addr],&val,4);break;
+			case 30:val=getbit64(reg_rt,0,63);memcpy(&memory[addr],&val,8);break;		
+		}
 
+	}
 	//write MEM_WB_old
+	if(MemRead == 0) 
+		MEM_WB_old.ALUout=EX_MEM.ALUout;
+	else 
+		MEM_WB_old.ALUout=val;
+	MEM_WB_old.MemRead=EX_MEM.Ctrl_M_MemRead;
+	MEM_WB_old.RegDst=EX_MEM.RegDst;
+	MEM_WB_old.Ctrl_WB_MemtoReg=EX_MEM.Ctrl_WB_MemtoReg;
+	MEM_WB_old.Ctrl_WB_RegWrite=EX_MEM.Ctrl_WB_RegWrite;
+}
 }
 
 
@@ -685,3 +801,4 @@ void WB()
 	}
 	//write reg
 }
+
