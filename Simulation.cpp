@@ -25,6 +25,14 @@ long long inst_num=0;
 //系统调用退出指示
 int exit_flag=0;
 
+//debug
+//#define DEBUG
+#ifdef DEBUG
+# define dgb_printf(...) printf(__VA_ARGS__)
+#else 
+# define dgb_printf(...)
+#endif
+
 //加载代码段
 //初始化PC
 void load_memory()
@@ -36,17 +44,22 @@ void load_memory()
 	fread(&memory[vcadr],1,csize,file);
 	
 	//for debugging
-	printf("cadr = %llx\n", cadr);
-	printf("csize = %llx\n", csize);
-	printf("vcadr = %llx\n", vcadr);
-	for(int i = 0; i < csize; i++)
+#ifdef DEBUG
 	{
-		printf("%02x",memory[i+vcadr]);
-		if((i+1)%4 == 0) printf(" ");
-		if((i+1)%16 == 0) printf("\n");
+		printf("cadr = %llx\n", cadr);
+		printf("csize = %llx\n", csize);
+		printf("vcadr = %llx\n", vcadr);
+		for(int i = 0; i < csize; i++)
+		{
+			printf("%02x",memory[i+vcadr]);
+			if((i+1)%4 == 0) printf(" ");
+			if((i+1)%16 == 0) printf("\n");
+		}
+		printf("\n.text finished!\n\n\n");
 	}
-	printf("\n.text finished!\n\n\n");
-	
+#endif
+
+
 	//映射.data段
 	fseek(file,dadr,SEEK_SET);
 	//因为.bss段在elf文件中不占用空间，所以实际映射的是.data段的大小
@@ -54,26 +67,33 @@ void load_memory()
 	fread(&memory[vdadr],1,dsize-bsize,file);	
 	
 	//for debugging
-	printf("dadr = %llx\n", dadr);
-	printf("dsize = %llx\n", dsize);
-	printf("vdadr = %llx\n", vdadr);
-	for(int i = 0; i < dsize; i++)
-	{
-		printf("%02x",memory[i+vdadr]);
-		if((i+1)%4 == 0) printf(" ");
-		if((i+1)%16==0) printf("\n");
+#ifdef DEBUG
+	{	
+		printf("dadr = %llx\n", dadr);
+		printf("dsize = %llx\n", dsize);
+		printf("vdadr = %llx\n", vdadr);
+		for(int i = 0; i < dsize; i++)
+		{
+			printf("%02x",memory[i+vdadr]);
+			if((i+1)%4 == 0) printf(" ");
+			if((i+1)%16==0) printf("\n");
+		}
+		printf("\n.data finished!\n\n\n");
 	}
-	printf("\n.data finished!\n\n\n");
+#endif
 
 	//维护一些值。
 	entry = vcadr;
 	endPC=madr+msize-3;
 	//for debugging
-	printf("entry = %llx\n", entry);
-	printf("gp = %llx\n", gp);
-	printf("madr = %llx\n", madr);
-
-
+#ifdef DEBUG
+	{
+		printf("entry = %llx\n", entry);
+		printf("gp = %llx\n", gp);
+		printf("madr = %llx\n", madr);
+	}
+#endif
+	
 	fclose(file);
 }
 
@@ -106,8 +126,13 @@ void simulate()
 	//int end=(int)endPC/4-1;
 	while(PC!=endPC)
 	{
-		printf("=======================================================\n");
-		printf("instruction num: %d\n",inst_num);
+#ifdef DEBUG
+		{		
+			printf("=======================================================\n");
+			printf("instruction num: %d\n",inst_num);
+		}
+#endif
+
 		//Decoder* decoder = (Decoder*) malloc(sizeof(Decoder));
 		//memset(decoder, 0, sizeof(Decoder));
 		//运行
@@ -130,8 +155,14 @@ void simulate()
 
         //free(decoder);
         inst_num++;
+
+#ifdef DEBUG
+		{
         print_REG();
         printf("=======================================================\n\n\n");
+		}
+#endif
+
 	}
 }
 
@@ -139,25 +170,39 @@ void simulate()
 //取指令
 void IF()
 {
-	printf("-------------IF--------------\n");
-	//write IF_ID_old
-	//IF_ID_old.inst=memory[PC];
-	
-	//For Debugging
-	printf("PC:%llx\n",PC);
+#ifdef DEBUG
+	{	
+		printf("-------------IF--------------\n");
+		//write IF_ID_old
+		//IF_ID_old.inst=memory[PC];
+		//For Debugging
+		printf("PC:%llx\n",PC);
+	}
+#endif
+
 	//For Debugging
 	memcpy(&IF_ID.inst,memory+PC,4);
 	IF_ID.PC=PC;
-	printf("instruction:%08x\n",IF_ID.inst);
-	printf("IF over!\n");
-	print_IFID();
+#ifdef DEBUG
+	{
+		printf("instruction:%08x\n",IF_ID.inst);
+		printf("IF over!\n");
+		print_IFID();
+	}
+#endif
+
 	PC=PC+4;
 }
 
 //译码
 void ID()
 {
-	printf("-------------ID--------------\n");
+#ifdef DEBUG
+	{
+		printf("-------------ID--------------\n");
+	}
+#endif
+ 
 	//Read IF_ID
 	unsigned int inst=IF_ID.inst;
 
@@ -169,7 +214,13 @@ void ID()
 	char RegWrite,MemtoReg;
 
 	unsigned int OP=getbit(inst,25,31);
-	printf("OP:  %02x \n",OP);
+
+#ifdef DEBUG
+	{	
+		printf("OP:  %02x \n",OP);
+	}
+#endif
+
 	unsigned int rs = 0;
 	unsigned int rt = 0;
 	unsigned int rd = 0;
@@ -184,7 +235,11 @@ void ID()
 
 	if(OP==OP_R)//R 0x33
 	{
-		printf("R-TYPE:\n");
+#ifdef DEBUG
+		{		
+			printf("R-TYPE:\n");
+		}
+#endif
 		fuc7=getbit(inst,0,6);
 		rt=getbit(inst,7,11);
 		rs=getbit(inst,12,16);
@@ -214,44 +269,44 @@ void ID()
 					case 0x20:
 						ALUop=3;//R[rd] ← R[rs1] - R[rs2]
 						break;
-					default: printf("Illegal Instruction\n"); break;
+					default: dgb_printf("Illegal Instruction\n"); break;
 				}
 				break;
 			case 1:
 				if(fuc7 == 0x00) ALUop=4;//R[rd] ← R[rs1] << R[rs2]
 				else if(fuc7==0x01) ALUop=5;//R[rd] ← (R[rs1] * R[rs2])[63:32]
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 2:
 				if(fuc7==0x00) ALUop=6;//R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 4:
 				if(fuc7 == 0x00) ALUop=7;//R[rd] ← R[rs1] ^ R[rs2]
 				else if(fuc7==0x01) ALUop=8;//R[rd] ← R[rs1] / R[rs2]
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 5:
 				if(fuc7 == 0x00||fuc7==0x02) ALUop=9;//R[rd] ← R[rs1] >> R[rs2]
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 6:
 				if(fuc7 == 0x00) ALUop=10;//R[rd] ← R[rs1] | R[rs2]
 				else if(fuc7==0x01) ALUop=11;//R[rd] ← R[rs1] % R[rs2]
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 7:
 				if(fuc7==0x00) ALUop=12;//R[rd] ← R[rs1] & R[rs2]
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			default: 
-				printf("Illegal Instruction\n");
+				dgb_printf("Illegal Instruction\n");
 				break;
 		}
 	}
 	else if(OP==OP_I)//I 0x13
 	{
-  		printf("I-TYPE:\n");
+  		dgb_printf("I-TYPE:\n");
   		Imm=getbit(inst,0,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
@@ -277,7 +332,7 @@ void ID()
 			case 1:
 				if(fuc7==0x00)
 				ALUop=18;//R[rd] ← R[rs1] << imm
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 2:
 				ALUop=19;//R[rd] ← (R[rs1] < imm) ? 1 : 0
@@ -287,7 +342,7 @@ void ID()
 				break;
 			case 5:
 				if(fuc7 == 0x00||fuc7==0x20) ALUop=21;//R[rd] ← R[rs1] >> imm
-				else printf("Illegal Instruction\n");
+				else dgb_printf("Illegal Instruction\n");
 				break;
 			case 6:
 				
@@ -297,27 +352,27 @@ void ID()
 				ALUop=23;//R[rd] ← R[rs1] & imm
 				break;
 			default:
-				printf("Illegal Instruction\n"); 
+				dgb_printf("Illegal Instruction\n"); 
 				break;
 		}
     }
     else if(OP==OP_SW)//S 0x23 
     {
-    	printf("S-TYPE:\n");
+    	dgb_printf("S-TYPE:\n");
     	Imm=(getbit(inst,0,6)<<5) + getbit(inst,20,24);
-      	rt=getbit(inst,7,11);
-      	rs=getbit(inst,12,16);
-      	fuc3=getbit(inst,17,19);
+      rt=getbit(inst,7,11);
+      rs=getbit(inst,12,16);
+      fuc3=getbit(inst,17,19);
   		Imm_length=12;
   		EXTop=1;
-		RegDst=0;
-		ALUop=0;
-		ALUSrc=1;
-		Branch=0;
-		MemRead=0;
-		MemWrite=1;
-		RegWrite=0;
-		MemtoReg=0;
+			RegDst=0;
+			ALUop=0;
+			ALUSrc=1;
+			Branch=0;
+			MemRead=0;
+			MemWrite=1;
+			RegWrite=0;
+			MemtoReg=0;
 
 		switch(fuc3)
 		{
@@ -333,7 +388,7 @@ void ID()
 			case 3:
 				ALUop=30;//Mem(R[rs1] + offset) ← R[rs2][63:0]
 				break;
-			default: printf("Illegal Instruction\n"); break;
+			default: dgb_printf("Illegal Instruction\n"); break;
 		}
     }
     else if(OP==OP_LW)//I 0x03  The LW instruction loads a 32-bit value from memory and sign-extends this to 64 bits before storing it in register rd for RV64I.
@@ -367,7 +422,7 @@ void ID()
 			case 3:
 				ALUop=16;//R[rd] ← Mem(R[rs1] + offset, doubleword)
 				break;
-			default: printf("Illegal Instruction\n");break;
+			default: dgb_printf("Illegal Instruction\n");break;
 		}
     }
     else if(OP==OP_BEQ)//SB  0x63
@@ -401,7 +456,7 @@ void ID()
 			case 5:
 				ALUop=34;//if(R[rs1] >= R[rs2]) PC ← PC + {offset, 1b'0}
 				break;
-			default: printf("Illegal Instruction\n");break;
+			default: dgb_printf("Illegal Instruction\n");break;
 		}
     }
     else if(OP==OP_JAL)//UJ 0x6f R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}
@@ -438,7 +493,7 @@ void ID()
 			RegWrite=1;
 			MemtoReg=0;
    	 	}
-		else printf("Illegal Instruction\n");	
+		else dgb_printf("Illegal Instruction\n");	
     }
     else if(OP==OP_JALR)//I 0x67 R[rd] ← PC + 4  PC ← R[rs1] + {imm, 1b'0}
     {
@@ -459,7 +514,7 @@ void ID()
 			RegWrite=1;
 			MemtoReg=0;
 		}
-		else printf("Illegal Instruction\n");
+		else dgb_printf("Illegal Instruction\n");
     }
     else if(OP==OP_SCALL)//I 0x73 (Transfers control to operating system)
     {
@@ -481,7 +536,7 @@ void ID()
 			RegWrite=0;
 			MemtoReg=0;
 		}
-		else printf("Illegal Instruction\n");
+		else dgb_printf("Illegal Instruction\n");
     }
     else if(OP==OP_AUIPC)//U 0x17
     {
@@ -538,6 +593,8 @@ void ID()
 	
 	
 	//For Debugging
+#ifdef DEBUG
+{
 	printf("Inst: \n");
 	switch (ALUop)
 	{
@@ -585,11 +642,13 @@ void ID()
 	printf("ID over!\n");
 	print_IDEX();
 }
+#endif
+}
 
 //执行
 void EX()
 {
-	printf("-------------EX--------------\n");
+	dgb_printf("-------------EX--------------\n");
 	unsigned int rd=ID_EX.Rd;
 	unsigned int rt=ID_EX.Rt;
 	long long Imm=ID_EX.Imm;
@@ -693,10 +752,10 @@ void EX()
 		case 25:
 			ALUout=temp_PC+4;
 			PC=Rs+(Imm<<1);
-			printf("case25!!!\n");
+			dgb_printf("case25!!!\n");
 			break;
 		case 26:
-			printf("System call\n");
+			dgb_printf("System call\n");
 			break;
 		case 27:
 			ALUout=Rs+Imm;
@@ -712,23 +771,23 @@ void EX()
 			break;
 		case 31:
 			if(Rs==Rt) PC=PC+Imm;
-			printf("case31!!!\n");
+			dgb_printf("case31!!!\n");
 			break;
 		case 32:
 			if(Rs!=Rt) PC=PC+Imm;
-			printf("case32!!!\n");
+			dgb_printf("case32!!!\n");
 			break;
 		case 33:
 			if(Rs<Rt) PC=PC+Imm;
-			printf("case33!!!\n");
+			dgb_printf("case33!!!\n");
 			break;
 		case 34:
 			if(Rs>=Rt) PC=PC+Imm;
-			printf("case34!!!\n");
+			dgb_printf("case34!!!\n");
 			break;
 		case 35:
 			ALUout=PC+Imm;
-			printf("case35!!!\n");
+			dgb_printf("case35!!!\n");
 			break;
 		case 36:
 			ALUout=Imm;
@@ -736,11 +795,11 @@ void EX()
 		case 37:
 			ALUout=PC+4;
 			PC=PC+Imm;
-			printf("case37!!!\n");
+			dgb_printf("case37!!!\n");
 			break;
 		
 		default:
-			printf("Error: Not found in current ISA.\n");
+			dgb_printf("Error: Not found in current ISA.\n");
 			break;
 	}
 
@@ -768,14 +827,18 @@ void EX()
 
 	EX_MEM.Ctrl_WB_RegWrite=ID_EX.Ctrl_WB_RegWrite;
 	EX_MEM.Ctrl_WB_MemtoReg=ID_EX.Ctrl_WB_MemtoReg;
-	printf("EX over!\n");
-	print_EXMEM();
+#ifdef DEBUG
+	{	
+		printf("EX over!\n");
+		print_EXMEM();
+	}
+#endif
 }
 
 //访问存储器
 	void MEM()
 {
-	printf("-------------MEM-------------\n");
+	dgb_printf("-------------MEM-------------\n");
 	//read EX_MEM
 	char Branch=EX_MEM.Ctrl_M_Branch;
 	char MemWrite=EX_MEM.Ctrl_M_MemWrite;
@@ -802,14 +865,14 @@ void EX()
 	else if (MemWrite == 1)
 	{
 		
-		printf("addr = %llx\n",addr);
+		dgb_printf("addr = %llx\n",addr);
 
 		switch(ALUop)
 		{
 			case 27:val=getbit64(reg_rt,56,63);memcpy(&memory[addr],&val,1);break;
 			case 28:val=getbit64(reg_rt,48,63);memcpy(&memory[addr],&val,2);break;
 			case 29:val=getbit64(reg_rt,32,63);memcpy(&memory[addr],&val,4);break;
-			case 30:val=getbit64(reg_rt,0,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,8);break;		
+			case 30:val=getbit64(reg_rt,0,63);dgb_printf("val = %llx\n",val);memcpy(&memory[addr],&val,8);break;		
 		}
 		
 
@@ -823,16 +886,19 @@ void EX()
 	MEM_WB.Reg_dst=EX_MEM.Reg_dst;
 	MEM_WB.Ctrl_WB_MemtoReg=EX_MEM.Ctrl_WB_MemtoReg;
 	MEM_WB.Ctrl_WB_RegWrite=EX_MEM.Ctrl_WB_RegWrite;
-
-	printf("MEM over!\n");
-	print_MEMWB();
+#ifdef DEBUG
+	{
+		printf("MEM over!\n");
+		print_MEMWB();
+	}
+#endif
 }
 
 
 //写回
 void WB()
 {
-	printf("-------------WB--------------\n");
+	dgb_printf("-------------WB--------------\n");
 	//read MEM_WB
   	unsigned int Mem_read=MEM_WB.Mem_read;
 	REG ALU_out=MEM_WB.ALU_out;
@@ -844,6 +910,6 @@ void WB()
 			reg[Reg_dst]=ALU_out;
 	}
 	//write reg
-	printf("WB over!\n");
+	dgb_printf("WB over!\n");
 }
 
