@@ -148,3 +148,112 @@ void print_REG()
 	}
 	printf("------------------------------------\n");
 }
+
+REG  mulh(REG r1, REG r2)
+{
+	unsigned char ans[128]={0};
+	unsigned char tmp1[128]={0};
+	unsigned char tmp2[128]={0};
+	long long a,b;
+	memcpy(&a,&r1,sizeof(r1));
+	memcpy(&b,&r2,sizeof(r2));
+
+	int sign_a=(r1>>63)&0x1;//符号位
+	int sign_b=(r2>>63)&0x1;
+	int num=0;//记录负数个数
+	if(sign_a==1)
+		{
+			a=-a;
+			num++;
+		}
+	if(sign_b==1)
+		{
+			b=-b;
+			num++;
+		}//全部当做unsigned相乘
+	unsigned long long ua_h,ua_l,ub_h,ub_l;
+	ua_h=getbit64(r1,0,31); ua_l=getbit64(r1,32,63);
+	ub_h=getbit64(r2,0,31); ub_l=getbit64(r2,32,63);
+	
+	unsigned long long res=0;
+	int j=0,acc=0,temp;
+	res=ua_l*ub_l; 
+	for(int i=0;i<=63;++i)
+		tmp1[i]=(unsigned char)((res>>i)&1);
+	
+	res=ua_l*ub_h;
+	for(int i=0;i<=63;++i)
+		tmp2[32+i]=(unsigned char)((res>>i)&1);
+	
+	j=0;
+	for(;j<64;++j)
+		{
+			temp=(int)tmp1[j]+(int)tmp2[j]+acc;
+			ans[j]=temp%2;
+			if(temp>=2)
+				acc=1;
+			else
+				acc=0;
+		}
+	for(;j<96;++j)
+		{
+			temp=tmp2[j]+acc;
+			ans[j]=temp%2;
+			if(temp>=2)
+				acc=1;
+			else
+				acc=0;
+		}
+	if(acc==1)
+		ans[j++]=1;
+	
+	memcpy(tmp1,ans,sizeof(ans));
+	memset(ans,0,sizeof(ans));
+	memset(tmp2,0,sizeof(tmp2));
+	
+	res=ua_h*ub_l;
+  for(int i=0;i<=63;++i)
+    tmp2[32+i]=(unsigned char)((res>>i)&1);
+	
+	j=0;temp=0;acc=0;
+	for(;j<96;++j)
+    {
+      temp=(int)tmp1[j]+(int)tmp2[j]+acc;
+      ans[j]=temp%2;
+      if(temp>=2)
+        acc=1;
+      else
+        acc=0;
+    }
+	if(acc==1)
+		ans[j++]=1;
+
+	memcpy(tmp1,ans,sizeof(ans));
+	memset(ans,0,sizeof(ans));
+	memset(tmp2,0,sizeof(tmp2));
+
+	res=ua_h*ub_h;
+	for(int i=0;i<=63;++i)
+		tmp2[64+i]=(unsigned char)((res>>i)&1);
+	
+	j=0;temp=0;acc=0;
+	for(;j<128;++j)
+		{
+			temp=(int)tmp1[j]+tmp2[j]+acc;
+			ans[j]=temp%2;
+			if(temp>=2)
+				acc=1;
+			else
+				acc=0;
+		}
+	
+	long long  ret=0;
+	for (int i=0;i<=127;++i)
+		ret=ret+((int)ans[i]<<i);
+	
+	if(num==1)
+		ret=-ret;
+	REG rr;
+	memcpy(&rr,&ret,sizeof(ret));
+	return rr;
+}
