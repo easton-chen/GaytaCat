@@ -619,7 +619,7 @@ void EX()
 			ALUout=Rs+Rt;
 			break;
 		case 2:
-			ALUout=(Rs*Rt)&0xffffffff;
+			ALUout=(Rs*Rt)&0xffffffffffffffff;
 			break;
 		case 3:
 			ALUout=Rs-Rt;
@@ -628,7 +628,7 @@ void EX()
 			ALUout=Rs<<Rt;
 			break;
 		case 5:
-			ALUout=((Rs*Rt)>>32)&0xffffffff;
+			ALUout=((Rs*Rt)>>64)&0xffffffffffffffff;
 			break;
 		case 6:
 			if(Rs<Rt) ALUout=1;
@@ -687,8 +687,8 @@ void EX()
 			ALUout=Rs&Imm;
 			break;
 		case 24:
-			//Reg[rs1] + sign-extented(Imm),结果取低32位后在符号扩展至64位。 
-			ALUout=ext_signed((Rs+Imm)&0xffffffff,1,32);
+			//R[rd] ← SignExt((R[rs1](63:0) + SignExt(imm))[31:0])
+			ALUout=ext_signed(((Rs&0xffffffffffffffff) + ext_signed(Imm,1,12))&0xffffffff,1,32);
 			break;
 		case 25:
 			ALUout=temp_PC+4;
