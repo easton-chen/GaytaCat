@@ -650,10 +650,12 @@ void EX()
 	unsigned int rd=ID_EX.Rd;
 	unsigned int rt=ID_EX.Rt;
 	long long Imm=ID_EX.Imm;
-
+	
 	REG Rs=ID_EX.Reg_Rs;
 	REG Rt=ID_EX.Reg_Rt;
-
+	/*printf("Rs=%llx\n", Rs);
+	printf("Rt=%llx\n", Rt);
+	printf("Imm=%llx\n", Imm);*/
 	char ALUSrc=ID_EX.Ctrl_EX_ALUSrc;
 	char ALUop=ID_EX.Ctrl_EX_ALUOp;
 	char RegDst=ID_EX.Ctrl_EX_RegDst;
@@ -748,7 +750,8 @@ void EX()
 			break;
 		case 25:
 			ALUout=temp_PC+4;
-			PC=Rs+(Imm<<1);
+			PC=Rs+Imm;
+			//this one is not sure, origin:PC=Rs+(Imm<<1);
 			printf("case25!!!\n");
 			break;
 		case 26:
