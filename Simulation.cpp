@@ -659,8 +659,7 @@ void EX()
 	char RegDst=ID_EX.Ctrl_EX_RegDst;
 
 	//read ID_EX
-	int temp_PC=ID_EX.PC;
-
+	long long temp_PC=ID_EX.PC;
 
 	//Branch PC calulate
 	//...
@@ -784,8 +783,11 @@ void EX()
 			printf("case34!!!\n");
 			break;
 		case 35:
-			ALUout=PC+Imm;
+			ALUout=temp_PC+Imm;
 			printf("case35!!!\n");
+			//printf("temp_PC=%llx\n",temp_PC);
+			//printf("Imm=%llx\n", Imm);
+			//printf("ALUout=%llx\n", ALUout);
 			break;
 		case 36:
 			ALUout=Imm;
