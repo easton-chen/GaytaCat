@@ -1,17 +1,14 @@
-#include<stdio.h>
+long long num = 5;
 
-int num = 5;
-
-int fun(int n)
+long long fun(long long n)
 {
-	if( n == 0 ) return 1;
+	if( n == (long long)0 ) return (long long)1;
 	else return n * fun(n-1);
 }
 
 int main()
 {
-	int b;	
+	long long b;	
 	b = fun(num);
-	printf("%d\n",b);
 	return 0;
 }
