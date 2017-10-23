@@ -1,4 +1,5 @@
 typedef unsigned long long REG;
+extern FILE *dbg;
 
 struct IFID{
 	unsigned int inst;

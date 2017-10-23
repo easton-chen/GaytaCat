@@ -130,13 +130,10 @@ long long ext_signed(unsigned int src,int bit,int length)
         else
         {
                 int sign=(src&(1<<(length-1)))>>(length-1);
-                //printf("sign:%d\n",sign);
                 long long tmp=0;
                 for(int i=0;i<64-length;++i)
                  tmp=tmp|(sign<<i);
-                //printf("tmp:%llx\n",tmp);
                 tmp=tmp<<length;
-                //printf("tmp:%llx\n",tmp);
                 return tmp+(long long)src;
         }
 }

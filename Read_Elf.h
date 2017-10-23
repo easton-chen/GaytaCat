@@ -139,4 +139,4 @@ unsigned long long endPC = 0;
 unsigned long long entry = 0;
 
 
-FILE *file=NULL;
+FILE *file = NULL;
