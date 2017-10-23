@@ -122,7 +122,7 @@ void simulate()
 {
 	//结束PC的设置
 	//int end=(int)endPC/4-1;
-	while(PC!=endPC&&inst_num<50)
+	while(PC!=endPC)
 	{
 #ifdef DEBUG
 		{		
@@ -429,7 +429,7 @@ void ID()
     	rt=getbit(inst,7,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
-    	Imm_length=12;
+    	Imm_length=13;
     	EXTop=0;
 		RegDst=0;
 		ALUop=0;
@@ -461,7 +461,7 @@ void ID()
     {
     	Imm=(getbit(inst,0,0)<<20) + (getbit(inst,12,19)<<12) + (getbit(inst,11,11)<<11) + (getbit(inst,1,10)<<1);
     	rd=getbit(inst,20,24);
-    	Imm_length=20;
+    	Imm_length=21;
     	EXTop=1;
 		RegDst=1;
 		ALUop=37;
@@ -746,7 +746,7 @@ void EX()
 			break;
 		case 24:
 			//R[rd] ← SignExt((R[rs1](63:0) + SignExt(imm))[31:0])
-			ALUout=ext_signed(((Rs&0xffffffffffffffff) + ext_signed(Imm,1,12))&0xffffffff,1,32);
+			ALUout=ext_signed((Rs + ext_signed(Imm,1,12))&0xffffffff,1,32);
 			break;
 		case 25:
 			ALUout=temp_PC+4;
@@ -770,19 +770,19 @@ void EX()
 			ALUout=Rs+Imm;
 			break;
 		case 31:
-			if(Rs==Rt) PC=PC+Imm;
+			if(Rs==Rt) PC=temp_PC+Imm;
 			printf("case31!!!\n");
 			break;
 		case 32:
-			if(Rs!=Rt) PC=PC+Imm;
+			if(Rs!=Rt) PC=temp_PC+Imm;
 			printf("case32!!!\n");
 			break;
 		case 33:
-			if(Rs<Rt) PC=PC+Imm;
+			if(Rs<Rt) PC=temp_PC+Imm;
 			printf("case33!!!\n");
 			break;
 		case 34:
-			if(Rs>=Rt) PC=PC+Imm;
+			if(Rs>=Rt) PC=temp_PC+Imm;
 			printf("case34!!!\n");
 			break;
 		case 35:
@@ -796,8 +796,10 @@ void EX()
 			ALUout=Imm;
 			break;
 		case 37:
-			ALUout=PC+4;
-			PC=PC+Imm;
+			ALUout=temp_PC+4;
+			PC=temp_PC+Imm;
+			printf("Imm = %llx\n",Imm);
+			printf("PC = %llx\n",PC);
 			printf("case37!!!\n");
 			break;
 		
