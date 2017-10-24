@@ -25,7 +25,7 @@ long long inst_num=0;
 int exit_flag=0;
 
 //debug
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 # define printf(...) printf(__VA_ARGS__)
 #else 
