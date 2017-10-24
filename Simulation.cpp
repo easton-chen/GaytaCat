@@ -115,6 +115,18 @@ int main()
 	simulate();
 
 	cout <<"simulate over!"<<endl;
+	/* result for matrix 
+	long long res_addr=0x11940;
+	long long res=0;
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 5; j++)
+		{
+			memcpy(&res,&memory[res_addr+i*40+j*8],8);
+			printf("c[%d][%d]=%lld  ",i,j,res);
+		}
+		printf("\n");
+	}*/
 	return 0;
 }
 
@@ -122,7 +134,7 @@ void simulate()
 {
 	//结束PC的设置
 	//int end=(int)endPC/4-1;
-	while(PC!=endPC && inst_num <= 4000000)
+	while(PC!=endPC)
 	{
 #ifdef DEBUG
 		{		
@@ -853,7 +865,7 @@ void EX()
 	char ALUop=EX_MEM.Ctrl_EX_ALUOp;
 	unsigned long long addr=EX_MEM.ALU_out;
 	long long reg_rt=EX_MEM.Reg_Rt;
-	long long val;
+	long long val=0;
 	//complete Branch instruction PC change (no idea what he is talking about)
 
 	//read / write memory
@@ -876,9 +888,9 @@ void EX()
 
 		switch(ALUop)
 		{
-			case 27:val=getbit64(reg_rt,56,63);memcpy(&memory[addr],&val,1);break;
-			case 28:val=getbit64(reg_rt,48,63);memcpy(&memory[addr],&val,2);break;
-			case 29:val=getbit64(reg_rt,32,63);memcpy(&memory[addr],&val,4);break;
+			case 27:val=getbit64(reg_rt,56,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,1);break;
+			case 28:val=getbit64(reg_rt,48,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,2);break;
+			case 29:val=getbit64(reg_rt,32,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,4);break;
 			case 30:val=getbit64(reg_rt,0,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,8);break;		
 		}
 		
