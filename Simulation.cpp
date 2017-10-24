@@ -119,11 +119,11 @@ int main()
 	long long mem_addr;
 	int cnt;
 	int size;
-	printf("please input the address you want to look up(Hexadecimal):\n");
+	cout << "please input the address you want to look up(Hexadecimal):" << endl;
 	scanf("%llx",&mem_addr);
-	printf("please input the number of object(Decimal system):\n");
+	cout << "please input the number of object(Decimal system):\n" << endl;
 	scanf("%d",&cnt);
-	printf("please input the size of each object(Decimal system, correct only for 1,2,4,8):\n");
+	cout << "please input the size of each object(Decimal system, correct only for 1,2,4,8):\n" << endl;
 	scanf("%d",&size);
 	print_memory(mem_addr,cnt,size);
 	return 0;
