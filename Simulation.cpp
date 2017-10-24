@@ -164,7 +164,7 @@ void simulate()
 
         //free(decoder);
         inst_num++;
-        if(inst_num>=100) return; 
+        //if(inst_num>=100) return; 
 #ifdef DEBUG
 		{
         print_REG();
