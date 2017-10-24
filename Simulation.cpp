@@ -122,7 +122,7 @@ void simulate()
 {
 	//结束PC的设置
 	//int end=(int)endPC/4-1;
-	while(PC!=endPC)
+	while(PC!=endPC && inst_num <= 4000000)
 	{
 #ifdef DEBUG
 		{		
@@ -430,7 +430,7 @@ void ID()
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
     	Imm_length=13;
-    	EXTop=0;
+    	EXTop=1;
 		RegDst=0;
 		ALUop=0;
 		ALUSrc=0;
@@ -783,6 +783,8 @@ void EX()
 			break;
 		case 34:
 			if(Rs>=Rt) PC=temp_PC+Imm;
+			printf("Imm = %llx\n",Imm);
+			printf("temp_PC = %llx\n",temp_PC);
 			printf("case34!!!\n");
 			break;
 		case 35:
