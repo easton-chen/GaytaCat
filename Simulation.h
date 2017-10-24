@@ -257,3 +257,50 @@ REG  mulh(REG r1, REG r2)
 	memcpy(&rr,&ret,sizeof(ret));
 	return rr;
 }
+
+void print_memory(long long addr, int cnt, int size)
+{
+	char res_char = 0;
+	short res_short = 0;
+	unsigned res_unsigned = 0;
+	long long res_long = 0;
+	printf("addr = %llx, cnt = %d, size = %d:\n",addr,cnt,size);
+	switch(size)
+	{
+		case 1:
+			for (int i = 0; i < cnt; i++)
+			{
+				memcpy(&res_char,&memory[addr+i*size],size);
+				printf("memory[0x%llx]=%x='%c'\t",addr+i*size,res_char,res_char);
+				if((i+1)%4 == 0) printf("\n");
+			}
+			break;
+		case 2:
+			for (int i = 0; i < cnt; i++)
+			{
+				memcpy(&res_short,&memory[addr+i*size],size);
+				printf("memory[0x%llx]=%x\t",addr+i*size,res_short);
+				if((i+1)%4 == 0) printf("\n");
+			}
+			break;
+		case 4:
+			for (int i = 0; i < cnt; i++)
+			{
+				memcpy(&res_unsigned,&memory[addr+i*size],size);
+				printf("memory[0x%llx]=%x\t",addr+i*size,res_unsigned);
+				if((i+1)%4 == 0) printf("\n");
+			}
+			break;
+		case 8:
+			for (int i = 0; i < cnt; i++)
+			{
+				memcpy(&res_long,&memory[addr+i*size],size);
+				printf("memory[0x%llx]=%llx\t",addr+i*size,res_long);
+				if((i+1)%4 == 0) printf("\n");
+			}
+			break;
+		default:
+			printf("illegal size!\n");
+			break;
+	}
+}

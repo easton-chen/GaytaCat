@@ -115,18 +115,17 @@ int main()
 	simulate();
 
 	cout <<"simulate over!"<<endl;
-	/* result for matrix 
-	long long res_addr=0x11940;
-	long long res=0;
-	for (int i = 0; i < 5; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
-			memcpy(&res,&memory[res_addr+i*40+j*8],8);
-			printf("c[%d][%d]=%lld  ",i,j,res);
-		}
-		printf("\n");
-	}*/
+
+	long long mem_addr;
+	int cnt;
+	int size;
+	printf("please input the address you want to look up(Hexadecimal):\n");
+	scanf("%llx",&mem_addr);
+	printf("please input the number of object(Decimal system):\n");
+	scanf("%d",&cnt);
+	printf("please input the size of each object(Decimal system, correct only for 1,2,4,8):\n");
+	scanf("%d",&size);
+	print_memory(mem_addr,cnt,size);
 	return 0;
 }
 
