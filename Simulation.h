@@ -149,7 +149,7 @@ void print_REG()
 	printf("------------------------------------\n");
 }
 
-REG  mulh(REG r1, REG r2)
+REG mulh(REG r1, REG r2)
 {
 	unsigned char ans[128]={0};
 	unsigned char tmp1[128]={0};

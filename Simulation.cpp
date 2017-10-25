@@ -697,7 +697,8 @@ void EX()
 			ALUout=Rs<<Rt;
 			break;
 		case 5:
-			ALUout=((Rs*Rt)>>64)&0xffffffffffffffff;
+			//ALUout=((Rs*Rt)>>64)&0xffffffffffffffff;
+			ALUout=mulh(Rs, Rt);
 			break;
 		case 6:
 			if(Rs<Rt) ALUout=1;
