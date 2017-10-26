@@ -34,15 +34,16 @@ bool open_file()
 	scanf("%s", FILENAME);
 	file=fopen(FILENAME,"r");
 	elf=fopen("elf.txt","w");
+	getchar();
 	if(file == NULL)
 		return false;
 	return true;
 }
 
-void read_elf()
+bool read_elf()
 {
 	if(!open_file())
-		return ;
+		return false;
 	
 	fprintf(elf,"ELF Header:\n");
 	read_Elf_header();
@@ -57,6 +58,8 @@ void read_elf()
 	read_symtable();
 	
 	fclose(elf);
+
+	return true;
 }
 
 void read_Elf_header()

@@ -1,7 +1,7 @@
 #include "Simulation.h"
 using namespace std;
 
-extern void read_elf();
+extern bool read_elf();
 extern unsigned long long cadr; //代码段在解释文件中的偏移地址
 extern unsigned long long csize; //代码段的长度
 extern unsigned long long vcadr; //代码段在内存中的虚拟地址	
@@ -17,19 +17,37 @@ extern unsigned long long msize;
 extern unsigned long long endPC; //程序结束时的PC
 extern unsigned long long entry; //程序的入口地址
 extern FILE *file;
+extern char FILENAME[20];
+
+//Simulation支持的命令
+const char* FILE_ARG = "file";
+const char* RUN_ARG = "run";
+const char* BREAKPOINT_ARG = "breakpoint";
+const char* SHORT_BREAKPOINT_ARG = "b";
+const char* CHECK_BREAKPOINT_ARG = "check b";
+const char* DELET_BREAKPOINT_ARG = "del b";
+const char* STEP_ARG = "step";
+const char* REG_ARG = "reg";
+const char* MEMORY_ARG = "mem";
+const char* QUIT_ARG = "quit";
+const char* HELP_ARG = "help";
 
 //指令运行数
 long long inst_num=0;
 
-//系统调用退出指示
-int exit_flag=0;
+//断点
+int break_num = 0;
+long long break_addr[100];
+
+//是否已经读入文件
+bool read_elf_flag = false;
 
 //debug
 //#define DEBUG
 #ifdef DEBUG
-# define printf(...) printf(__VA_ARGS__)
+# define debug_printf(...) debug_printf(__VA_ARGS__)
 #else 
-# define printf(...)
+# define debug_printf(...)
 #endif
 
 //加载代码段
@@ -45,19 +63,18 @@ void load_memory()
 	//for debugging
 #ifdef DEBUG
 	{
-		printf( "cadr = %llx\n", cadr);
-		printf( "csize = %llx\n", csize);
-		printf( "vcadr = %llx\n", vcadr);
+		debug_printf( "cadr = %llx\n", cadr);
+		debug_printf( "csize = %llx\n", csize);
+		debug_printf( "vcadr = %llx\n", vcadr);
 		for(int i = 0; i < csize; i++)
 		{
-			printf( "%02x",memory[i+vcadr]);
-			if((i+1)%4 == 0) printf( " ");
-			if((i+1)%16 == 0) printf( "\n");
+			debug_printf( "%02x",memory[i+vcadr]);
+			if((i+1)%4 == 0) debug_printf( " ");
+			if((i+1)%16 == 0) debug_printf( "\n");
 		}
-		printf( "\n.text finished!\n\n\n");
+		debug_printf( "\n.text finished!\n\n\n");
 	}
 #endif
-
 
 	//映射.data段
 	fseek(file,dadr,SEEK_SET);
@@ -68,16 +85,16 @@ void load_memory()
 	//for debugging
 #ifdef DEBUG
 	{	
-		printf( "dadr = %llx\n", dadr);
-		printf( "dsize = %llx\n", dsize);
-		printf( "vdadr = %llx\n", vdadr);
+		debug_printf( "dadr = %llx\n", dadr);
+		debug_printf( "dsize = %llx\n", dsize);
+		debug_printf( "vdadr = %llx\n", vdadr);
 		for(int i = 0; i < dsize; i++)
 		{
-			printf( "%02x",memory[i+vdadr]);
-			if((i+1)%4 == 0) printf( " ");
-			if((i+1)%16==0) printf( "\n");
+			debug_printf( "%02x",memory[i+vdadr]);
+			if((i+1)%4 == 0) debug_printf( " ");
+			if((i+1)%16==0) debug_printf( "\n");
 		}
-		printf( "\n.data finished!\n\n\n");
+		debug_printf( "\n.data finished!\n\n\n");
 	}
 #endif
 
@@ -87,9 +104,9 @@ void load_memory()
 	//for debugging
 #ifdef DEBUG
 	{
-		printf( "entry = %llx\n", entry);
-		printf( "gp = %llx\n", gp);
-		printf( "madr = %llx\n", madr);
+		debug_printf( "entry = %llx\n", entry);
+		debug_printf( "gp = %llx\n", gp);
+		debug_printf( "madr = %llx\n", madr);
 	}
 #endif
 	
@@ -98,80 +115,273 @@ void load_memory()
 
 int main()
 {
-	//解析elf文件
-	read_elf();
-	
-	//加载内存
-	load_memory();
+	char* command;
+	command = new char[120];
+	break_num = 0;
+	cout << "riscv simulator by ycx" << endl;
+	cout << "version V1.0" << endl;
+	cout << "you can input 'help' for usage" << endl;
+	while(1)
+	{
+		cout << ">>>";
+		cin.getline(command, 100);
+		command = trim(command); //去掉前后空格。
+		//读文件
+		if(!strcmp(command, FILE_ARG))
+		{
+			//解析elf文件
+			if(read_elf())
+			{
+				//加载内存
+				load_memory();
+				//设置入口地址
+				PC=madr;		
+				//设置全局数据段地址寄存器
+				reg[3]=gp;	
+				reg[2]=MAX/2;//栈基址 （sp寄存器）
+				read_elf_flag = true;
 
-	//设置入口地址
-	PC=madr;
-	
-	//设置全局数据段地址寄存器
-	reg[3]=gp;
-	
-	reg[2]=MAX/2;//栈基址 （sp寄存器）
+				cout << "elf parse successfully!" << endl;
+				printf("main() address is: 0x%llx\n", madr);
+				printf("global pointer is: 0x%llx\n", gp);
+				printf("stack pointer is : 0x%llx\n", MAX/2);
+			}
+			else
+			{
+				cout << "can not open file: " << FILENAME << endl;
+			}
+		}
+		else if(!strcmp(command, RUN_ARG))
+		{
+			if(read_elf_flag) 
+			{
+				simulate(0);
+			}
+			else 
+			{
+				if(read_elf())
+				{
+					//加载内存
+					load_memory();
+					//设置入口地址
+					PC=madr;		
+					//设置全局数据段地址寄存器
+					reg[3]=gp;	
+					reg[2]=MAX/2;//栈基址 （sp寄存器）
+					read_elf_flag = true;
 
-	simulate();
+					cout << "elf parse successfully!" << endl;
+					printf("main() address is: 0x%llx\n", madr);
+					printf("global pointer is: 0x%llx\n", gp);
+					printf("stack pointer is : 0x%llx\n", MAX/2);
+					
+					//模拟
+					simulate(0);
+				}
+				else
+				{
+					cout << "can not open file: " << FILENAME << endl;
+				}
+			}
+		}
+		else if( (!strcmp(command, BREAKPOINT_ARG)) || (!strcmp(command, SHORT_BREAKPOINT_ARG)) )
+		{
+			printf("please input the breakpoint address you want to set at:");
+			if (break_num < 100)
+			{
+				scanf("%llx", &break_addr[break_num++]);
+				getchar();
+				printf("set breakpoint successfully at: 0x%llx\n", break_addr[break_num-1]);
+			}
+			else
+			{
+				printf("set breakpoint failed! try to delete some before add more breakpoint\n");
+				printf("breakpoint lists are as follows:\n");
+				print_breakpoint();
+			}
+		}
+		else if(!strcmp(command, CHECK_BREAKPOINT_ARG))
+		{
+			print_breakpoint();
+		}
+		else if(!strcmp(command, DELET_BREAKPOINT_ARG))
+		{
+			printf("input the index of the breakpoint you want to delete:");
+			int i;
+			scanf("%d", &i);
+			getchar();
+			if(i < break_num)
+			{
+				for(int j = i; j < break_num - 1; j++)
+					break_addr[j] =  break_addr[j+1];
+				break_num--;
+				printf("delete breakpoint %d successfully!\n",i);
+			}
+			else
+				printf("illegal index!\n");
+		}
+		else if(!strcmp(command, STEP_ARG))
+		{
+			if(read_elf_flag) 
+			{
+				simulate(1);
+			}
+			else 
+			{
+				if(read_elf())
+				{
+					//加载内存
+					load_memory();
+					//设置入口地址
+					PC=madr;		
+					//设置全局数据段地址寄存器
+					reg[3]=gp;	
+					reg[2]=MAX/2;//栈基址 （sp寄存器）
+					read_elf_flag = true;
 
-	cout <<"simulate over!"<<endl;
+					cout << "elf parse successfully!" << endl;
+					printf("main() address is: 0x%llx\n", madr);
+					printf("global pointer is: 0x%llx\n", gp);
+					printf("stack pointer is : 0x%llx\n", MAX/2);
+					
+					//模拟
+					simulate(1);
+				}
+				else
+				{
+					cout << "can not open file: " << FILENAME << endl;
+				}
+			}
+		}
+		else if(!strcmp(command, REG_ARG))
+		{
+			print_REG();
+		}
+		else if(!strcmp(command, MEMORY_ARG))
+		{
+			long long mem_addr;
+			int cnt;
+			int size;
+			cout << "please input the address you want to look up(Hexadecimal):" << endl;
+			scanf("%llx",&mem_addr);
+			getchar();
+			cout << "please input the number of object(Decimal system):" << endl;
+			scanf("%d",&cnt);
+			getchar();
+			cout << "please input the size of each object(Decimal system, correct only for 1,2,4,8):" << endl;
+			scanf("%d",&size);
+			getchar();
+			print_memory(mem_addr,cnt,size);
+		}
+		else if(!strcmp(command, QUIT_ARG))
+		{
+			break;
+		}
+		else if(!strcmp(command, HELP_ARG))
+		{
+			usage();
+		}
+		else
+		{
+			printf("illegal command!\n");
+			usage();
+		}
 
-	long long mem_addr;
-	int cnt;
-	int size;
-	cout << "please input the address you want to look up(Hexadecimal):" << endl;
-	scanf("%llx",&mem_addr);
-	cout << "please input the number of object(Decimal system):\n" << endl;
-	scanf("%d",&cnt);
-	cout << "please input the size of each object(Decimal system, correct only for 1,2,4,8):\n" << endl;
-	scanf("%d",&size);
-	print_memory(mem_addr,cnt,size);
+
+		/*long long mem_addr;
+		int cnt;
+		int size;
+		cout << "please input the address you want to look up(Hexadecimal):" << endl;
+		scanf("%llx",&mem_addr);
+		cout << "please input the number of object(Decimal system):\n" << endl;
+		scanf("%d",&cnt);
+		cout << "please input the size of each object(Decimal system, correct only for 1,2,4,8):\n" << endl;
+		scanf("%d",&size);
+		print_memory(mem_addr,cnt,size);
+		*/
+	}
 	return 0;
 }
 
-void simulate()
+void simulate(int step)
 {
-	//结束PC的设置
-	//int end=(int)endPC/4-1;
+	bool break_flag = false; 
 	while(PC!=endPC)
 	{
 #ifdef DEBUG
 		{		
-			printf( "=======================================================\n");
-			printf( "instruction num: %d\n",inst_num);
+			debug_printf( "=======================================================\n");
+			debug_printf( "instruction num: %d\n",inst_num);
 		}
 #endif
+		//检查断点
+		for(int i = 0; i < break_num; i++)
+		{
+			if(PC == break_addr[i])
+			{
+				printf("trigger the breakpoint at 0x%llx\n", PC);
+				printf("input your selection:\n");
+				printf("'step' for go by step\n");
+				printf("'run' for continue\n");
+				printf("'break' for back to input command\n");
 
-		//Decoder* decoder = (Decoder*) malloc(sizeof(Decoder));
-		//memset(decoder, 0, sizeof(Decoder));
+				char selection[20];
+				scanf("%s" ,selection);
+				getchar();
+				if(!strcmp(selection,"step"))
+				{
+					step = 1;
+					break;
+				}
+				else if(!strcmp(selection,"run"))
+				{
+					break;
+				}
+				else if(!strcmp(selection,"break"))
+				{
+					break_flag = true;
+					break;
+				}
+				else
+				{
+					printf("illegal selection!automatically break out to command input!\n");
+					break_flag = true;
+					break;
+				}
+			}
+		}
+		if(break_flag) break;
+		
 		//运行
 		IF();
 		ID();
 		EX();
 		MEM();
-		WB();
-
-		//更新中间寄存器
-		//IF_ID=IF_ID_old;
-		//ID_EX=ID_EX_old;
-		//EX_MEM=EX_MEM_old;
-		//MEM_WB=MEM_WB_old;
-
-        if(exit_flag==1)
-            break;
+		WB(); 
 
         reg[0]=0;//一直为零
 
-        //free(decoder);
         inst_num++;
         //if(inst_num>=100) return; 
 #ifdef DEBUG
 		{
         print_REG();
-        printf( "=======================================================\n\n\n");
+        debug_printf( "=======================================================\n\n\n");
 		}
 #endif
-
+		
+		if(PC == endPC)
+		{
+			cout << "simulation over!" << endl;
+			cout << "you can use 'reg' or 'mem' to check out the result" << endl;
+			read_elf_flag = false; //方便重新开始。
+		}
+		if(step != 0) 
+		{
+			cout << "step over!" << endl;
+			cout << "you can use 'reg' or 'mem' to check out what have changed" << endl;
+			break;
+		}
 	}
 }
 
@@ -181,11 +391,11 @@ void IF()
 {
 #ifdef DEBUG
 	{	
-		printf( "-------------IF--------------\n");
+		debug_printf( "-------------IF--------------\n");
 		//write IF_ID_old
 		//IF_ID_old.inst=memory[PC];
 		//For Debugging
-		printf( "PC:%llx\n",PC);
+		debug_printf( "PC:%llx\n",PC);
 	}
 #endif
 
@@ -194,8 +404,8 @@ void IF()
 	IF_ID.PC=PC;
 #ifdef DEBUG
 	{
-		printf( "instruction:%08x\n",IF_ID.inst);
-		printf( "IF over!\n");
+		debug_printf( "instruction:%08x\n",IF_ID.inst);
+		debug_printf( "IF over!\n");
 		print_IFID();
 	}
 #endif
@@ -208,7 +418,7 @@ void ID()
 {
 #ifdef DEBUG
 	{
-		printf( "-------------ID--------------\n");
+		debug_printf( "-------------ID--------------\n");
 	}
 #endif
  
@@ -226,7 +436,7 @@ void ID()
 
 #ifdef DEBUG
 	{	
-		printf( "OP:  %02x \n",OP);
+		debug_printf( "OP:  %02x \n",OP);
 	}
 #endif
 
@@ -246,7 +456,7 @@ void ID()
 	{
 #ifdef DEBUG
 		{		
-			printf( "R-TYPE:\n");
+			debug_printf( "R-TYPE:\n");
 		}
 #endif
 		fuc7=getbit(inst,0,6);
@@ -278,44 +488,44 @@ void ID()
 					case 0x20:
 						ALUop=3;//R[rd] ← R[rs1] - R[rs2]
 						break;
-					default: printf("Illegal Instruction\n"); break;
+					default: debug_printf("Illegal Instruction\n"); break;
 				}
 				break;
 			case 1:
 				if(fuc7 == 0x00) ALUop=4;//R[rd] ← R[rs1] << R[rs2]
 				else if(fuc7==0x01) ALUop=5;//R[rd] ← (R[rs1] * R[rs2])[63:32]
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 2:
 				if(fuc7==0x00) ALUop=6;//R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 4:
 				if(fuc7 == 0x00) ALUop=7;//R[rd] ← R[rs1] ^ R[rs2]
 				else if(fuc7==0x01) ALUop=8;//R[rd] ← R[rs1] / R[rs2]
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 5:
 				if(fuc7 == 0x00||fuc7==0x02) ALUop=9;//R[rd] ← R[rs1] >> R[rs2]
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 6:
 				if(fuc7 == 0x00) ALUop=10;//R[rd] ← R[rs1] | R[rs2]
 				else if(fuc7==0x01) ALUop=11;//R[rd] ← R[rs1] % R[rs2]
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 7:
 				if(fuc7==0x00) ALUop=12;//R[rd] ← R[rs1] & R[rs2]
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			default: 
-				printf("Illegal Instruction\n");
+				debug_printf("Illegal Instruction\n");
 				break;
 		}
 	}
 	else if(OP==OP_I)//I 0x13
 	{
-  		printf("I-TYPE:\n");
+  		debug_printf("I-TYPE:\n");
   		Imm=getbit(inst,0,11);
     	rs=getbit(inst,12,16);
     	fuc3=getbit(inst,17,19);
@@ -341,7 +551,7 @@ void ID()
 			case 1:
 				if(fuc7==0x00)
 				ALUop=18;//R[rd] ← R[rs1] << imm
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 2:
 				ALUop=19;//R[rd] ← (R[rs1] < imm) ? 1 : 0
@@ -351,7 +561,7 @@ void ID()
 				break;
 			case 5:
 				if(fuc7 == 0x00||fuc7==0x20) ALUop=21;//R[rd] ← R[rs1] >> imm
-				else printf("Illegal Instruction\n");
+				else debug_printf("Illegal Instruction\n");
 				break;
 			case 6:
 				
@@ -361,13 +571,13 @@ void ID()
 				ALUop=23;//R[rd] ← R[rs1] & imm
 				break;
 			default:
-				printf("Illegal Instruction\n"); 
+				debug_printf("Illegal Instruction\n"); 
 				break;
 		}
     }
     else if(OP==OP_SW)//S 0x23 
     {
-    	printf("S-TYPE:\n");
+    	debug_printf("S-TYPE:\n");
     	Imm=(getbit(inst,0,6)<<5) + getbit(inst,20,24);
       	rt=getbit(inst,7,11);
       	rs=getbit(inst,12,16);
@@ -397,7 +607,7 @@ void ID()
 			case 3:
 				ALUop=30;//Mem(R[rs1] + offset) ← R[rs2][63:0]
 				break;
-			default: printf("Illegal Instruction\n"); break;
+			default: debug_printf("Illegal Instruction\n"); break;
 		}
     }
     else if(OP==OP_LW)//I 0x03  The LW instruction loads a 32-bit value from memory and sign-extends this to 64 bits before storing it in register rd for RV64I.
@@ -431,7 +641,7 @@ void ID()
 			case 3:
 				ALUop=16;//R[rd] ← Mem(R[rs1] + offset, doubleword)
 				break;
-			default: printf("Illegal Instruction\n");break;
+			default: debug_printf("Illegal Instruction\n");break;
 		}
     }
     else if(OP==OP_BEQ)//SB  0x63
@@ -465,7 +675,7 @@ void ID()
 			case 5:
 				ALUop=34;//if(R[rs1] >= R[rs2]) PC ← PC + {offset, 1b'0}
 				break;
-			default: printf("Illegal Instruction\n");break;
+			default: debug_printf("Illegal Instruction\n");break;
 		}
     }
     else if(OP==OP_JAL)//UJ 0x6f R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}
@@ -502,7 +712,7 @@ void ID()
 			RegWrite=1;
 			MemtoReg=0;
    	 	}
-		else printf("Illegal Instruction\n");	
+		else debug_printf("Illegal Instruction\n");	
     }
     else if(OP==OP_JALR)//I 0x67 R[rd] ← PC + 4  PC ← R[rs1] + {imm, 1b'0}
     {
@@ -523,7 +733,7 @@ void ID()
 			RegWrite=1;
 			MemtoReg=0;
 		}
-		else printf("Illegal Instruction\n");
+		else debug_printf("Illegal Instruction\n");
     }
     else if(OP==OP_SCALL)//I 0x73 (Transfers control to operating system)
     {
@@ -545,7 +755,7 @@ void ID()
 			RegWrite=0;
 			MemtoReg=0;
 		}
-		else printf("Illegal Instruction\n");
+		else debug_printf("Illegal Instruction\n");
     }
     else if(OP==OP_AUIPC)//U 0x17
     {
@@ -585,8 +795,8 @@ void ID()
 	ID_EX.Reg_Rt=reg[rt];
 
 	ID_EX.PC=IF_ID.PC;
-	printf( "EXTop == %d\n",EXTop);
-	printf( "Imm_length = %d\n",Imm_length);
+	debug_printf( "EXTop == %d\n",EXTop);
+	debug_printf( "Imm_length = %d\n",Imm_length);
 	ID_EX.Imm=ext_signed(Imm,EXTop,Imm_length);
 
 	ID_EX.Ctrl_EX_ALUSrc=ALUSrc;
@@ -604,51 +814,51 @@ void ID()
 	//For Debugging
 #ifdef DEBUG
 {
-	printf("Inst: \n");
+	debug_printf("Inst: \n");
 	switch (ALUop)
 	{
-		case 1: printf("R[rd] ← R[rs1] + R[rs2]\n"); break;
-		case 2: printf("R[rd] ← (R[rs1] * R[rs2])[31:0]\n");break;
-		case 3: printf("R[rd] ← R[rs1] - R[rs2]\n");break;
-		case 4: printf("R[rd] ← R[rs1] << R[rs2]\n");break;
-		case 5: printf("R[rd] ← (R[rs1] * R[rs2])[63:32]\n");break;
-		case 6: printf("R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0\n");break;
-		case 7: printf("R[rd] ← R[rs1] ^ R[rs2]\n");break;
-		case 8: printf("R[rd] ← R[rs1] / R[rs2]\n");break;
-		case 9: printf("R[rd] ← R[rs1] >> R[rs2]\n");break;
-		case 10: printf("R[rd] ← R[rs1] | R[rs2]\n");break;
-		case 11: printf("R[rd] ← (R[rs1] %% R[rs2]\n");break;
-		case 12: printf("R[rd] ← R[rs1] & R[rs2]\n");break;
-		case 13: printf("R[rd] ← SignExt(Mem(R[rs1] + offset, byte))\n");break;
-		case 14: printf("R[rd] ← SignExt(Mem(R[rs1] + offset, half))\n");break;
-		case 15: printf("R[rd] ← Mem(R[rs1] + offset, word)\n");break;
-		case 16: printf("R[rd] ← Mem(R[rs1] + offset, doubleword)\n");break;
-		case 17: printf("R[rd] ← R[rs1] + imm\n");break;
-		case 18: printf("[rd] ← R[rs1] << imm\n");break;
-		case 19: printf("R[rd] ← (R[rs1] < imm) ? 1 : 0\n");break;
-		case 20: printf("R[rd] ← R[rs1] ^ imm\n");break;
-		case 21: printf("R[rd] ← R[rs1] >> imm\n");break;
-		case 22: printf("R[rd] ← R[rs1] | imm\n");break;
-		case 23: printf("R[rd] ← R[rs1] & imm\n");break;
-		case 24: printf("R[rd] ← SignExt(R[rs1](31:0) + imm)\n");break;
-		case 25: printf("R[rd] ← PC + 4\nPC ← R[rs1] + {imm, 1b'0}\n");break;
-		case 26: printf("(Transfers control to operating system)\n");break;
-		case 27: printf("Mem(R[rs1] + offset) ← R[rs2][7:0]\n");break;
-		case 28: printf("Mem(R[rs1] + offset) ← R[rs2][15:0]\n");break;
-		case 29: printf("Mem(R[rs1] + offset) ← R[rs2][31:0]\n");break;
-		case 30: printf("Mem(R[rs1] + offset) ← R[rs2][63:0]\n");break;
-		case 31: printf("if(R[rs1] == R[rs2])\n");break;
-		case 32: printf("if(R[rs1] != R[rs2])\n");break;
-		case 33: printf("if(R[rs1] < R[rs2])\n");break;
-		case 34: printf("if(R[rs1] >= R[rs2])\n");break;
-		case 35: printf("R[rd] ← PC + {offset, 12'b0}\n");break;
-		case 36: printf("R[rd] ← {offset, 12'b0}\n");break;
-		case 37: printf("R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}\n");break;
-		default: printf("Illegal Instruction\n");break;
+		case 1: debug_printf("R[rd] ← R[rs1] + R[rs2]\n"); break;
+		case 2: debug_printf("R[rd] ← (R[rs1] * R[rs2])[31:0]\n");break;
+		case 3: debug_printf("R[rd] ← R[rs1] - R[rs2]\n");break;
+		case 4: debug_printf("R[rd] ← R[rs1] << R[rs2]\n");break;
+		case 5: debug_printf("R[rd] ← (R[rs1] * R[rs2])[63:32]\n");break;
+		case 6: debug_printf("R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0\n");break;
+		case 7: debug_printf("R[rd] ← R[rs1] ^ R[rs2]\n");break;
+		case 8: debug_printf("R[rd] ← R[rs1] / R[rs2]\n");break;
+		case 9: debug_printf("R[rd] ← R[rs1] >> R[rs2]\n");break;
+		case 10: debug_printf("R[rd] ← R[rs1] | R[rs2]\n");break;
+		case 11: debug_printf("R[rd] ← (R[rs1] %% R[rs2]\n");break;
+		case 12: debug_printf("R[rd] ← R[rs1] & R[rs2]\n");break;
+		case 13: debug_printf("R[rd] ← SignExt(Mem(R[rs1] + offset, byte))\n");break;
+		case 14: debug_printf("R[rd] ← SignExt(Mem(R[rs1] + offset, half))\n");break;
+		case 15: debug_printf("R[rd] ← Mem(R[rs1] + offset, word)\n");break;
+		case 16: debug_printf("R[rd] ← Mem(R[rs1] + offset, doubleword)\n");break;
+		case 17: debug_printf("R[rd] ← R[rs1] + imm\n");break;
+		case 18: debug_printf("[rd] ← R[rs1] << imm\n");break;
+		case 19: debug_printf("R[rd] ← (R[rs1] < imm) ? 1 : 0\n");break;
+		case 20: debug_printf("R[rd] ← R[rs1] ^ imm\n");break;
+		case 21: debug_printf("R[rd] ← R[rs1] >> imm\n");break;
+		case 22: debug_printf("R[rd] ← R[rs1] | imm\n");break;
+		case 23: debug_printf("R[rd] ← R[rs1] & imm\n");break;
+		case 24: debug_printf("R[rd] ← SignExt(R[rs1](31:0) + imm)\n");break;
+		case 25: debug_printf("R[rd] ← PC + 4\nPC ← R[rs1] + {imm, 1b'0}\n");break;
+		case 26: debug_printf("(Transfers control to operating system)\n");break;
+		case 27: debug_printf("Mem(R[rs1] + offset) ← R[rs2][7:0]\n");break;
+		case 28: debug_printf("Mem(R[rs1] + offset) ← R[rs2][15:0]\n");break;
+		case 29: debug_printf("Mem(R[rs1] + offset) ← R[rs2][31:0]\n");break;
+		case 30: debug_printf("Mem(R[rs1] + offset) ← R[rs2][63:0]\n");break;
+		case 31: debug_printf("if(R[rs1] == R[rs2])\n");break;
+		case 32: debug_printf("if(R[rs1] != R[rs2])\n");break;
+		case 33: debug_printf("if(R[rs1] < R[rs2])\n");break;
+		case 34: debug_printf("if(R[rs1] >= R[rs2])\n");break;
+		case 35: debug_printf("R[rd] ← PC + {offset, 12'b0}\n");break;
+		case 36: debug_printf("R[rd] ← {offset, 12'b0}\n");break;
+		case 37: debug_printf("R[rd] ← PC + 4 PC ← PC + {imm, 1b'0}\n");break;
+		default: debug_printf("Illegal Instruction\n");break;
 
 	}
 
-	printf("ID over!\n");
+	debug_printf("ID over!\n");
 	print_IDEX();
 }
 #endif
@@ -657,16 +867,16 @@ void ID()
 //执行
 void EX()
 {
-	printf("-------------EX--------------\n");
+	debug_printf("-------------EX--------------\n");
 	unsigned int rd=ID_EX.Rd;
 	unsigned int rt=ID_EX.Rt;
 	long long Imm=ID_EX.Imm;
 	
 	REG Rs=ID_EX.Reg_Rs;
 	REG Rt=ID_EX.Reg_Rt;
-	/*printf("Rs=%llx\n", Rs);
-	printf("Rt=%llx\n", Rt);
-	printf("Imm=%llx\n", Imm);*/
+	/*debug_printf("Rs=%llx\n", Rs);
+	debug_printf("Rt=%llx\n", Rt);
+	debug_printf("Imm=%llx\n", Imm);*/
 	char ALUSrc=ID_EX.Ctrl_EX_ALUSrc;
 	char ALUop=ID_EX.Ctrl_EX_ALUOp;
 	char RegDst=ID_EX.Ctrl_EX_RegDst;
@@ -763,10 +973,10 @@ void EX()
 			ALUout=temp_PC+4;
 			PC=Rs+Imm;
 			//this one is not sure, origin:PC=Rs+(Imm<<1);
-			printf("case25!!!\n");
+			debug_printf("case25!!!\n");
 			break;
 		case 26:
-			printf("System call\n");
+			debug_printf("System call\n");
 			break;
 		case 27:
 			ALUout=Rs+Imm;
@@ -782,28 +992,28 @@ void EX()
 			break;
 		case 31:
 			if(Rs==Rt) PC=temp_PC+Imm;
-			printf("case31!!!\n");
+			debug_printf("case31!!!\n");
 			break;
 		case 32:
 			if(Rs!=Rt) PC=temp_PC+Imm;
-			printf("case32!!!\n");
+			debug_printf("case32!!!\n");
 			break;
 		case 33:
 			if(Rs<Rt) PC=temp_PC+Imm;
-			printf("case33!!!\n");
+			debug_printf("case33!!!\n");
 			break;
 		case 34:
 			if(Rs>=Rt) PC=temp_PC+Imm;
-			printf("Imm = %llx\n",Imm);
-			printf("temp_PC = %llx\n",temp_PC);
-			printf("case34!!!\n");
+			debug_printf("Imm = %llx\n",Imm);
+			debug_printf("temp_PC = %llx\n",temp_PC);
+			debug_printf("case34!!!\n");
 			break;
 		case 35:
 			ALUout=temp_PC+Imm;
-			printf("case35!!!\n");
-			//printf("temp_PC=%llx\n",temp_PC);
-			//printf("Imm=%llx\n", Imm);
-			//printf("ALUout=%llx\n", ALUout);
+			debug_printf("case35!!!\n");
+			//debug_printf("temp_PC=%llx\n",temp_PC);
+			//debug_printf("Imm=%llx\n", Imm);
+			//debug_printf("ALUout=%llx\n", ALUout);
 			break;
 		case 36:
 			ALUout=Imm;
@@ -811,13 +1021,13 @@ void EX()
 		case 37:
 			ALUout=temp_PC+4;
 			PC=temp_PC+Imm;
-			printf("Imm = %llx\n",Imm);
-			printf("PC = %llx\n",PC);
-			printf("case37!!!\n");
+			debug_printf("Imm = %llx\n",Imm);
+			debug_printf("PC = %llx\n",PC);
+			debug_printf("case37!!!\n");
 			break;
 		
 		default:
-			printf("Error: Not found in current ISA.\n");
+			debug_printf("Error: Not found in current ISA.\n");
 			break;
 	}
 
@@ -847,7 +1057,7 @@ void EX()
 	EX_MEM.Ctrl_WB_MemtoReg=ID_EX.Ctrl_WB_MemtoReg;
 #ifdef DEBUG
 	{	
-		printf("EX over!\n");
+		debug_printf("EX over!\n");
 		print_EXMEM();
 	}
 #endif
@@ -856,7 +1066,7 @@ void EX()
 //访问存储器
 	void MEM()
 {
-	printf("-------------MEM-------------\n");
+	debug_printf("-------------MEM-------------\n");
 	//read EX_MEM
 	char Branch=EX_MEM.Ctrl_M_Branch;
 	char MemWrite=EX_MEM.Ctrl_M_MemWrite;
@@ -883,14 +1093,14 @@ void EX()
 	else if (MemWrite == 1)
 	{
 		
-		printf("addr = %llx\n",addr);
+		debug_printf("addr = %llx\n",addr);
 
 		switch(ALUop)
 		{
-			case 27:val=getbit64(reg_rt,56,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,1);break;
-			case 28:val=getbit64(reg_rt,48,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,2);break;
-			case 29:val=getbit64(reg_rt,32,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,4);break;
-			case 30:val=getbit64(reg_rt,0,63);printf("val = %llx\n",val);memcpy(&memory[addr],&val,8);break;		
+			case 27:val=getbit64(reg_rt,56,63);debug_printf("val = %llx\n",val);memcpy(&memory[addr],&val,1);break;
+			case 28:val=getbit64(reg_rt,48,63);debug_printf("val = %llx\n",val);memcpy(&memory[addr],&val,2);break;
+			case 29:val=getbit64(reg_rt,32,63);debug_printf("val = %llx\n",val);memcpy(&memory[addr],&val,4);break;
+			case 30:val=getbit64(reg_rt,0,63);debug_printf("val = %llx\n",val);memcpy(&memory[addr],&val,8);break;		
 		}
 		
 
@@ -906,7 +1116,7 @@ void EX()
 	MEM_WB.Ctrl_WB_RegWrite=EX_MEM.Ctrl_WB_RegWrite;
 #ifdef DEBUG
 	{
-		printf("MEM over!\n");
+		debug_printf("MEM over!\n");
 		print_MEMWB();
 	}
 #endif
@@ -916,7 +1126,7 @@ void EX()
 //写回
 void WB()
 {
-	printf("-------------WB--------------\n");
+	debug_printf("-------------WB--------------\n");
 	//read MEM_WB
   	unsigned int Mem_read=MEM_WB.Mem_read;
 	REG ALU_out=MEM_WB.ALU_out;
@@ -928,6 +1138,6 @@ void WB()
 			reg[Reg_dst]=ALU_out;
 	}
 	//write reg
-	printf("WB over!\n");
+	debug_printf("WB over!\n");
 }
 

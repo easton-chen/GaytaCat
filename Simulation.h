@@ -6,7 +6,9 @@
 #include<time.h>
 #include<stdlib.h>
 #include<string.h>
+#include<ctype.h>
 #include"Reg_def.h"
+
 
 #define OP_JAL 111
 #define OP_R 51
@@ -62,6 +64,9 @@ unsigned int imm20=0;
 unsigned int imm7=0;
 unsigned int imm5=0;
 
+extern int break_num;
+extern long long break_addr[100];
+
 /*
 typedef struct decoder{
 	int OP;
@@ -82,7 +87,7 @@ typedef struct decoder{
 //加载内存
 void load_memory();
 
-void simulate();
+void simulate(int step);
 
 void IF();
 
@@ -142,6 +147,7 @@ void print_REG()
 {
 	printf("The register files are as follows:\n");
 	printf("------------------------------------\n");
+	printf("PC = %llx\n", PC);
 	for(int i = 0; i < 32; i++)
 	{
 		printf("REG[%d] = %llx\n", i, reg[i]);
@@ -303,4 +309,45 @@ void print_memory(long long addr, int cnt, int size)
 			printf("illegal size!\n");
 			break;
 	}
+	printf("\n");
+}
+
+void print_breakpoint()
+{
+	printf("Index\tAddress\n");
+	for(int i = 0; i < break_num; i++)
+		printf("%d\t0x%llx\n", i, break_addr[i]);
+}
+
+void usage()
+{
+	printf("here is the command my simulation support:\n");
+	printf("file\t\tread and parse the program compiled by riscv-gcc\n");
+	printf("run\t\tsimulate until the program is over in main()\n");
+	printf("breakpoint\tset the breakpoint, MAX number is 100\n");
+	printf("b\t\tsame as breakpoint\n");
+	printf("check b\t\tcheck the breakpoint you've set\n");
+	printf("del b\t\tdelete a breakpoint you've set\n");
+	printf("step\t\tsimulate the program by one instruction\n");
+	printf("reg\t\tcheck the register files, often used after step or touching a breakpoint\n");
+	printf("mem\t\tcheck the memory, often used after step or touching a breakpoint\n");
+	printf("quit\t\tquit the simulation program\n");
+	printf("help\t\tdisplay this helping information\n");
+	printf("\n");
+	printf("Attention:\n");
+	printf("All the commands themselves are without parameters.\n");
+	printf("After you input one of these commands, there will be some guidelines informing you to input parameters or not\n");
+}
+
+char *trim(char *str)
+{
+    char *p = str;
+    char *p1;
+    if(p)
+    {
+        p1 = p + strlen(str) - 1;
+        while(*p && isspace(*p)) p++;
+        while(p1 > p && isspace(*p1)) *p1-- = 0;
+    }
+    return p;
 }

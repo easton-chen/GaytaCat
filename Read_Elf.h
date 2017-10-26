@@ -1,5 +1,9 @@
 #include<stdio.h>
 #include<string.h>
+#include<iostream>
+#include<stdlib.h>
+#include<ctype.h>
+using namespace std;
 typedef struct{
 	unsigned char b[8];
 }int64;
@@ -98,7 +102,7 @@ typedef struct
 } Elf64_Phdr;
 
 
-void read_elf();
+bool read_elf();
 void read_Elf_header();
 void read_elf_sections();
 void read_symtable();
